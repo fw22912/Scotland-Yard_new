@@ -192,22 +192,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return moves;
 		}
 
-//		@Nonnull
-//		private ScotlandYard.Ticket usedTicket(Player player){
-//
-//			return null;
-//		}
-//
-//		@Nonnull
-//		private Player updatePlayer(Player player){
-//			if(player.isDetective()){
-//
-//			}
-//			else{
-//				player = player.use(usedTicket(player));
-//			}
-//			return null;
-//		}
+
 
 		public static List<Integer> updateLocation(Move move){
 			List<Integer> newDestination = new ArrayList<>();
@@ -240,6 +225,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			});
 		}
+		//added sth
 
 		@Nonnull
 		public GameState advance(Move move){
