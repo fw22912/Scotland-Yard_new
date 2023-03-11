@@ -52,7 +52,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Player> set = new HashSet<>();
 			Set<Integer> setLocation = new HashSet<>();
 			for (Player detective : detectives) {
-				//if(detective == null) throw new NullPointerException("testAnyNullDetectiveShouldThrow: One of the detectives is null");
+				if(detective == null) throw new NullPointerException("testAnyNullDetectiveShouldThrow: One of the detectives is null");
 				if (detective.isMrX())
 					throw new IllegalArgumentException("testMoreThanOneMrXShouldThrow: There is more than one MrX!");
 				if (detective.has(ScotlandYard.Ticket.DOUBLE))
@@ -66,7 +66,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			if (setup.moves.isEmpty()) throw new IllegalArgumentException("testEmptyMovesShouldThrow: Moves is empty!");
 			if (setup.graph.nodes().isEmpty())
-				throw new IllegalArgumentException("testEmptyGraphShouldThrow: Emtpy graph!");
+				throw new IllegalArgumentException("testEmptyGraphShouldThrow: Empty graph!");
 		}
 
 		//implementing methods
@@ -179,7 +179,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, mrX, mrX.location(), log);
 				newMoves.addAll(singleMoves);
 				newMoves.addAll(doubleMoves);
-			} else {
+			}
+			else {
 				for (Player playerDetective : detectives) {
 					if (this.remaining.contains(playerDetective.piece())) {
 						Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, playerDetective, playerDetective.location());
@@ -191,39 +192,80 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return moves;
 		}
 
-		@Nonnull
-		private ScotlandYard.Ticket usedTicket(Player player){
+//		@Nonnull
+//		private ScotlandYard.Ticket usedTicket(Player player){
+//
+//			return null;
+//		}
+//
+//		@Nonnull
+//		private Player updatePlayer(Player player){
+//			if(player.isDetective()){
+//
+//			}
+//			else{
+//				player = player.use(usedTicket(player));
+//			}
+//			return null;
+//		}
 
-			return null;
+		public static List<Integer> updateLocation(Move move){
+			List<Integer> newDestination = new ArrayList<>();
+			return move.accept(new Move.Visitor<List<Integer>>() {
+
+
+				@Override
+				public List<Integer> visit(Move.SingleMove move) {
+					return null;
+				}
+
+				@Override
+				public List<Integer> visit(Move.DoubleMove move) {
+					return null;
+				}
+			});
 		}
 
-		@Nonnull
-		private Player updatePlayer(Player player){
-			if(player.isDetective()){
+		public static List<ScotlandYard.Ticket> updateTicket(Move move){
+			List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
+			return move.accept(new Move.Visitor<List<ScotlandYard.Ticket>>() {
+				@Override
+				public List<ScotlandYard.Ticket> visit(Move.SingleMove move) {
+					return null;
+				}
 
-			}
-			else{
-				player = player.use(usedTicket(player));
-			}
-			return null;
+				@Override
+				public List<ScotlandYard.Ticket> visit(Move.DoubleMove move) {
+					return null;
+				}
+			});
 		}
 
 		@Nonnull
 		public GameState advance(Move move){
 			this.moves = getAvailableMoves();
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
+			//for updating log
+			List<LogEntry> listLog = new ArrayList<>();
+
 			if(move.commencedBy() == mrX.piece()){
 				//using single move
-
-				//using secret move
+				//Move.Visitor<>
 
 				//using double move
+
+				//using secret move
 
 			}
 			else{
 				//using single move
 
+
 			}
+			for(Player playerDetective : detectives){
+				//doing sth
+			}
+			log = ImmutableList.copyOf(listLog);
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 
