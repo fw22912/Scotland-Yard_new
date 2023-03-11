@@ -196,7 +196,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		private Player updatePlayer(Player player){
-			if (player.isDetective()){
+			if(player.isDetective()){
 
 			}
 			else{
