@@ -113,92 +113,92 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			else return ImmutableSet.of();
 		}
 
-	private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
-		// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
-		Set<Move.SingleMove> availableMoves = new HashSet<>();
-		Set<Integer> detectiveOccupied = new HashSet<>();
-		for (Player detective : detectives) {
-			detectiveOccupied.add(detective.location());
-		}
+		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
+			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
+			Set<Move.SingleMove> availableMoves = new HashSet<>();
+			Set<Integer> detectiveOccupied = new HashSet<>();
+			for (Player detective : detectives) {
+				detectiveOccupied.add(detective.location());
+			}
 
-		for (int destination : setup.graph.adjacentNodes(source)) {
-			// TODO find out if destination is occupied by a detective
-			//  if the location is occupied, don't add to the collection of moves to return
-			if (!detectiveOccupied.contains(destination)) {
-				for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
-					// TODO find out if the player has the required tickets
-					//  if it does, construct a SingleMove and add it the collection of moves to return
+			for (int destination : setup.graph.adjacentNodes(source)) {
+				// TODO find out if destination is occupied by a detective
+				//  if the location is occupied, don't add to the collection of moves to return
+				if (!detectiveOccupied.contains(destination)) {
+					for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
+						// TODO find out if the player has the required tickets
+						//  if it does, construct a SingleMove and add it the collection of moves to return
 
-					if (player.has(t.requiredTicket())) {
-						Move.SingleMove newMoves = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
-						availableMoves.add(newMoves);
+						if (player.has(t.requiredTicket())) {
+							Move.SingleMove newMoves = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+							availableMoves.add(newMoves);
+						}
 					}
-				}
-				// TODO consider the rules of secret moves here
-				//  add moves to the destination via a secret ticket if there are any left with the player
+					// TODO consider the rules of secret moves here
+					//  add moves to the destination via a secret ticket if there are any left with the player
 					if (player.has(ScotlandYard.Ticket.SECRET) && player.isMrX()) {
 						Move.SingleMove newMoves = new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination);
 						availableMoves.add(newMoves);
-				}
-			}
-		}
-		// TODO return the collection of moves
-		return availableMoves;
-	}
-
-	private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log) {
-		Set<Move.DoubleMove> doubleMoves = new HashSet<>();
-		//storing firstMoves
-		Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
-		//availableMoves for checking the number of left available moves
-		Integer availableMoves = setup.moves.size() - log.size();
-
-		if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
-			for (Move.SingleMove firstMove : firstMoves) {
-				Set<Move.SingleMove> secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
-				for (Move.SingleMove secondMove : secondMoves) {
-					if ((player.hasAtLeast(firstMove.ticket, 2)
-							&& firstMove.ticket == secondMove.ticket)
-							|| firstMove.ticket != secondMove.ticket) {
-						Move.DoubleMove doubleMove = new Move.DoubleMove(player.piece(), source, firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination);
-						doubleMoves.add(doubleMove);
 					}
 				}
 			}
+			// TODO return the collection of moves
+			return availableMoves;
 		}
-		return doubleMoves;
-	}
 
+		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log) {
+			Set<Move.DoubleMove> doubleMoves = new HashSet<>();
+			//storing firstMoves
+			Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
+			//availableMoves for checking the number of left available moves
+			Integer availableMoves = setup.moves.size() - log.size();
 
-	@Nonnull
-	public ImmutableSet<Move> getAvailableMoves() {
-		Set<Move> newMoves = new HashSet<>();
-		if (this.remaining.contains(mrX.piece())) {
-			//How to make single moves
-			Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, mrX, mrX.location());
-			Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, mrX, mrX.location(), log);
-			newMoves.addAll(singleMoves);
-			newMoves.addAll(doubleMoves);
-		} else {
-			for (Player playerDetective : detectives) {
-				if (this.remaining.contains(playerDetective.piece())) {
-					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, playerDetective, playerDetective.location());
-					newMoves.addAll(singleMoves);
+			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
+				for (Move.SingleMove firstMove : firstMoves) {
+					Set<Move.SingleMove> secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
+					for (Move.SingleMove secondMove : secondMoves) {
+						if ((player.hasAtLeast(firstMove.ticket, 2)
+								&& firstMove.ticket == secondMove.ticket)
+								|| firstMove.ticket != secondMove.ticket) {
+							Move.DoubleMove doubleMove = new Move.DoubleMove(player.piece(), source, firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination);
+							doubleMoves.add(doubleMove);
+						}
+					}
 				}
 			}
+			return doubleMoves;
 		}
-		moves = ImmutableSet.copyOf(newMoves);
-		return moves;
-	}
 
-	@Nonnull
-	private ScotlandYard.Ticket usedTicket(Player player){
+
+		@Nonnull
+		public ImmutableSet<Move> getAvailableMoves() {
+			Set<Move> newMoves = new HashSet<>();
+			if (this.remaining.contains(mrX.piece())) {
+				//How to make single moves
+				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, mrX, mrX.location());
+				Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, mrX, mrX.location(), log);
+				newMoves.addAll(singleMoves);
+				newMoves.addAll(doubleMoves);
+			} else {
+				for (Player playerDetective : detectives) {
+					if (this.remaining.contains(playerDetective.piece())) {
+						Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, playerDetective, playerDetective.location());
+						newMoves.addAll(singleMoves);
+					}
+				}
+			}
+			moves = ImmutableSet.copyOf(newMoves);
+			return moves;
+		}
+
+		@Nonnull
+		private ScotlandYard.Ticket usedTicket(Player player){
 
 			return null;
-	}
+		}
 
-	@Nonnull
-	private Player updatePlayer(Player player){
+		@Nonnull
+		private Player updatePlayer(Player player){
 			if(player.isDetective()){
 
 			}
@@ -206,10 +206,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				player = player.use(usedTicket(player));
 			}
 			return null;
-	}
+		}
 
-	@Nonnull
-	public GameState advance(Move move){
+		@Nonnull
+		public GameState advance(Move move){
 			this.moves = getAvailableMoves();
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 			if(move.commencedBy() == mrX.piece()){
@@ -225,7 +225,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			}
 			return new MyGameState(setup, remaining, log, mrX, detectives);
-	}
+		}
 
 	}
 	@Nonnull @Override public GameState build(
