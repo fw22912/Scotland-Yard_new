@@ -15,6 +15,7 @@ import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * cw-model
@@ -52,7 +53,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if (mrX.isDetective()) throw new IllegalArgumentException("testNoMrXShouldThrow: MrX is a detective!");
 			Set<Player> set = new HashSet<>();
 			Set<Integer> setLocation = new HashSet<>();
-			for (Player playerDetective : detectives) {
+			detectives.forEach(playerDetective -> {
 				if(playerDetective == null) throw new NullPointerException("testAnyNullDetectiveShouldThrow: One of the detectives is null");
 				if (playerDetective.isMrX())
 					throw new IllegalArgumentException("testMoreThanOneMrXShouldThrow: There is more than one MrX!");
@@ -64,10 +65,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					throw new IllegalArgumentException("testDuplicateDetectivesShouldThrow: Duplicate detectives!");
 				if (!setLocation.add(playerDetective.location()))
 					throw new IllegalArgumentException("testLocationOverlapBetweenDetectivesShouldThrow");
-			}
+			});
 			if (setup.moves.isEmpty()) throw new IllegalArgumentException("testEmptyMovesShouldThrow: Moves is empty!");
 			if (setup.graph.nodes().isEmpty())
-				throw new IllegalArgumentException("testEmptyGraphShouldThrow: Empty graph!");
+				throw new IllegalArgumentException("testEmptyGraphShouldThrow:Empty graph!");
 		}
 
 		//implementing methods
@@ -118,9 +119,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
 			Set<Move.SingleMove> availableMoves = new HashSet<>();
 			Set<Integer> detectiveOccupied = new HashSet<>();
-			for (Player detective : detectives) {
-				detectiveOccupied.add(detective.location());
-			}
+//			for (Player detective : detectives) {
+//				detectiveOccupied.add(detective.location());
+//			}
+
+			detectives.stream().forEach(detective -> detectiveOccupied.add(detective.location()));
 
 			for (int destination : setup.graph.adjacentNodes(source)) {
 				// TODO find out if destination is occupied by a detective
@@ -289,7 +292,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				//adding up all the tickets that were used
 				mrX.use(move.tickets());
 				//move Mr X's position to their new destination
-				return new MyGameState(setup, remaining, log, mrX, detectives);
 			}
 
 			//Detectives' move
