@@ -235,7 +235,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public GameState advance(Move move) {
 			//this.moves = getAvailableMoves();
 			if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
-			//for updating log, ticket,
+			//for updating log, ticket, location
+			Set<Piece> updateRemaining = new HashSet<>();
 			List<LogEntry> listLogEntry = new ArrayList<>();
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
@@ -251,30 +252,44 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
-					//3. hidden + reveal
+					//2. hidden + reveal
 					else if (setup.moves.get(log.size() + 1)) {
 						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
 						listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
 					}
-					//2. hidden + hidden
+					//3. hidden + hidden
 					else {
 						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
+					//updating mrX location
+					mrX.at(addLocation.get(1));
 				}
+
 				//Singlemove
 				else {
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
+					//updating mrX location
+					mrX.at(addLocation.get(0));
 				}
+				//adding up all the tickets that were used
 				mrX.use(move.tickets());
+				//move Mr X's position to their new destination
 				return new MyGameState(setup, remaining, log, mrX, detectives);
 			}
 
 			//Detectives' move
 			else {
-
+				for(Player playerDetective : detectives){
+					if(move.commencedBy() == playerDetective.piece()){
+						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+						playerDetective.use(move.tickets()).give(move.tickets());
+					}
+				}
 			}
+
+			log = ImmutableList.copyOf(listLogEntry);
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 	}
