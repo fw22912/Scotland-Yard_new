@@ -235,46 +235,30 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public GameState advance(Move move){
 			//this.moves = getAvailableMoves();
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
-			//for updating log
-			List<LogEntry> listLog = new ArrayList<>();
-//			Set<Pair<List<ScotlandYard.Ticket>>>u
-			List<Pair<ScotlandYard.Ticket, Integer>> addNewMove = new ArrayList<>();
+			//for updating log, ticket,
+			List<LogEntry> listLogEntry = new ArrayList<>();
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
 
-
-			for(int i = 0; i < updateTicket(move).size(); i++){
-				Pair addPair = new Pair<>(addTicket.get(i), addLocation.get(i));
-				System.out.println(addPair);
-				addNewMove.add(i, addPair);
-			}
-
-
-			for(Move newMove : getAvailableMoves()){
-				//Pair<ScotlandYard.Ticket, Integer> newPair = new Pair<>(updateTicket(newMove), updateLocation(newMove));
-				//addNewLog.add(<updateTicket(newMove), updateLocation(newMove)>);
-//				newMoves.add()
-			}
-			//listLog.add(updateLocation(move));
-
+			System.out.println(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+			//Singlemove
+			System.out.println(setup.moves.get(log.size()+1));
 			if(move.commencedBy() == mrX.piece()){
-				//using single move
-				//Move.Visitor<>
-
-				//using double move
-
-				//using secret move
-
+				if(setup.moves.get(log.size())){
+					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+				}
 			}
-			else{
-				//using single move
+				//doubleMove
+				else if(setup.moves.get(log.size()) && setup.moves.get(log.size()+1)){
+					for(Move allMove : moves){
+						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+						listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
+					}
 
+				}
+				else{
 
-			}
-			for(Player playerDetective : detectives){
-				//doing sth
-			}
-			log = ImmutableList.copyOf(listLog);
+				}
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 
