@@ -243,27 +243,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//1. move should be added to the log
 			//MrX's move
 			if (move.commencedBy() == mrX.piece()) {
-				//Singlemove
-				if (setup.moves.get(log.size())) {
-					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
-				}
 				//Doublemove
-				// checking the log only for reveal tickets
-				//1. reveal + hidden
-				else if (setup.moves.get(log.size()) && setup.moves.get(log.size() + 1)) {
+				if(addTicket.size() == 2){
+					// checking the log only for reveal tickets
+					//1. reveal + hidden
+					if (setup.moves.get(log.size())) {
+						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
+					}
+					//3. hidden + reveal
+					else if (setup.moves.get(log.size() + 1)) {
+						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
+						listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
+					}
+					//2. hidden + hidden
+					else {
+						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
+						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
+					}
+				}
+				//Singlemove
+				else {
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-					listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
-				}
-				//2. hidden + hidden
-				else if (setup.moves.get(log.size())) {
 					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
-					listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
-				}
-				//3. hidden + reveal
-				else if (setup.moves.get(log.size() + 1)) {
-					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
-					listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
 				}
 				mrX.use(move.tickets());
 				return new MyGameState(setup, remaining, log, mrX, detectives);
@@ -271,10 +273,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			//Detectives' move
 			else {
-				//1. move the detective to their new destination
-				//2. take the used ticket from the detective and give it to MrX
-				//3. Ensure that particular detective won't move again this round e.g., when getAvailable.
-				log = ImmutableList.copyOf(listLogEntry);
+
 			}
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
