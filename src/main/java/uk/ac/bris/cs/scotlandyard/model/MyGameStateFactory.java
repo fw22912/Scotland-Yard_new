@@ -231,6 +231,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
+		//for updating remaining
+		private void updateRemaining(Player player) {
+			remaining = remaining.stream()
+					.filter(p -> !p.equals(player.piece()))
+					.collect(ImmutableSet.toImmutableSet());
+		}
+
+
 		@Nonnull
 		public GameState advance(Move move) {
 			//this.moves = getAvailableMoves();
@@ -240,6 +248,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<LogEntry> listLogEntry = new ArrayList<>();
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
+			List<Player> movedDetectives = new ArrayList<>();
 
 			//1. move should be added to the log
 			//MrX's move
@@ -247,6 +256,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				//Doublemove
 				if(addTicket.size() == 2){
 					// checking the log only for reveal tickets
+					//check if mrX is using double ticket
 					//1. reveal + hidden
 					if (setup.moves.get(log.size())) {
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
@@ -262,10 +272,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
+					mrX.use(ScotlandYard.Ticket.DOUBLE);
 					//updating mrX location
 					mrX.at(addLocation.get(1));
 				}
-
 				//Singlemove
 				else {
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
@@ -284,13 +294,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				for(Player playerDetective : detectives){
 					if(move.commencedBy() == playerDetective.piece()){
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-						playerDetective.use(move.tickets()).give(move.tickets());
+						//give the used ticket to mrX
+						mrX.give(addTicket.get(0));
+						updateRemaining(playerDetective);
+						//update moved detectives for returning state(if)
+						movedDetectives.add(playerDetective);
 					}
 				}
 			}
 
-			log = ImmutableList.copyOf(listLogEntry);
-			return new MyGameState(setup, remaining, log, mrX, detectives);
+			if (this.remaining.size() > 0) {
+				return new MyGameState(setup, remaining, log, mrX, movedDetectives);
+			}
+			else return new MyGameState(setup, remaining, ImmutableList.copyOf(listLogEntry), mrX, detectives);
+
 		}
 	}
 
