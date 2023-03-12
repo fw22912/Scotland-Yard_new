@@ -52,17 +52,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if (mrX.isDetective()) throw new IllegalArgumentException("testNoMrXShouldThrow: MrX is a detective!");
 			Set<Player> set = new HashSet<>();
 			Set<Integer> setLocation = new HashSet<>();
-			for (Player detective : detectives) {
-				if(detective == null) throw new NullPointerException("testAnyNullDetectiveShouldThrow: One of the detectives is null");
-				if (detective.isMrX())
+			for (Player playerDetective : detectives) {
+				if(playerDetective == null) throw new NullPointerException("testAnyNullDetectiveShouldThrow: One of the detectives is null");
+				if (playerDetective.isMrX())
 					throw new IllegalArgumentException("testMoreThanOneMrXShouldThrow: There is more than one MrX!");
-				if (detective.has(ScotlandYard.Ticket.DOUBLE))
+				if (playerDetective.has(ScotlandYard.Ticket.DOUBLE))
 					throw new IllegalArgumentException("testDetectiveHaveDoubleTicketShouldThrow: Detectives have double tickets!");
-				if (detective.has(ScotlandYard.Ticket.SECRET))
+				if (playerDetective.has(ScotlandYard.Ticket.SECRET))
 					throw new IllegalArgumentException("testDetectiveHaveSecretTicketShouldThrow: Detectives have secret tickets!");
-				if (!set.add(detective))
+				if (!set.add(playerDetective))
 					throw new IllegalArgumentException("testDuplicateDetectivesShouldThrow: Duplicate detectives!");
-				if (!setLocation.add(detective.location()))
+				if (!setLocation.add(playerDetective.location()))
 					throw new IllegalArgumentException("testLocationOverlapBetweenDetectivesShouldThrow");
 			}
 			if (setup.moves.isEmpty()) throw new IllegalArgumentException("testEmptyMovesShouldThrow: Moves is empty!");
@@ -253,7 +253,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				//Doublemove
 				//1. hidden + hidden
 				//2. hidden + reveal
-				else if(setup.moves.get(log.size()+1)){
+				else if(setup.moves.get(log.size() + 1)){
 					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
 					mrX.use(addTicket.get(0));
 					listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
@@ -269,8 +269,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			//Detectives' move
-			else{
-
+			else {
+				for (Player playerDetective : detectives) {
+					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+					playerDetective.use(addTicket.get(0));
+					playerDetective.use(addTicket.get(0)).give(addTicket.get(0));
+					getAvailableMoves();
+				}
 			}
 			log = ImmutableList.copyOf(listLogEntry);
 			return new MyGameState(setup, remaining, log, mrX, detectives);
