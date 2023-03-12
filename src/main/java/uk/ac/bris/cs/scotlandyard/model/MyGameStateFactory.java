@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.EndpointPair;
 import com.sun.javafx.geom.Edge;
 import com.sun.media.jfxmedia.events.PlayerStateEvent;
+import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
@@ -197,16 +198,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public static List<Integer> updateLocation(Move move){
 			List<Integer> newDestination = new ArrayList<>();
 			return move.accept(new Move.Visitor<List<Integer>>() {
-
-
 				@Override
 				public List<Integer> visit(Move.SingleMove move) {
-					return null;
+					newDestination.add(move.destination);
+					return newDestination;
 				}
 
 				@Override
 				public List<Integer> visit(Move.DoubleMove move) {
-					return null;
+					newDestination.add(move.destination1);
+					newDestination.add(move.destination2);
+					return newDestination;
 				}
 			});
 		}
@@ -216,23 +218,44 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return move.accept(new Move.Visitor<List<ScotlandYard.Ticket>>() {
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.SingleMove move) {
-					return null;
+					newTicket.add(move.ticket);
+					return newTicket;
 				}
 
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.DoubleMove move) {
-					return null;
+					newTicket.add(move.ticket1);
+					newTicket.add(move.ticket2);
+					return newTicket;
 				}
 			});
 		}
-		//added sth
 
 		@Nonnull
 		public GameState advance(Move move){
-			this.moves = getAvailableMoves();
+			//this.moves = getAvailableMoves();
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 			//for updating log
 			List<LogEntry> listLog = new ArrayList<>();
+//			Set<Pair<List<ScotlandYard.Ticket>>>u
+			List<Pair<ScotlandYard.Ticket, Integer>> addNewMove = new ArrayList<>();
+			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
+			List<Integer> addLocation = updateLocation(move);
+
+
+			for(int i = 0; i < updateTicket(move).size(); i++){
+				Pair addPair = new Pair<>(addTicket.get(i), addLocation.get(i));
+				System.out.println(addPair);
+				addNewMove.add(i, addPair);
+			}
+
+
+			for(Move newMove : getAvailableMoves()){
+				//Pair<ScotlandYard.Ticket, Integer> newPair = new Pair<>(updateTicket(newMove), updateLocation(newMove));
+				//addNewLog.add(<updateTicket(newMove), updateLocation(newMove)>);
+//				newMoves.add()
+			}
+			//listLog.add(updateLocation(move));
 
 			if(move.commencedBy() == mrX.piece()){
 				//using single move
@@ -256,6 +279,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 	}
+
 	@Nonnull @Override public GameState build(
 			GameSetup setup,
 			Player mrX,
