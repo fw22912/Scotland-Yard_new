@@ -240,25 +240,39 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
 
-			System.out.println(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-			//Singlemove
-			System.out.println(setup.moves.get(log.size()+1));
-			if(move.commencedBy() == mrX.piece()){
-				if(setup.moves.get(log.size())){
+			//MrX's move
+			if(move.commencedBy() == mrX.piece()) {
+				//Singlemove
+				if (setup.moves.get(log.size())) {
+
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
+					mrX.use(addTicket.get(0));
+				}
+
+				//Doublemove
+				//1. hidden + hidden
+				//2. hidden + reveal
+				else if(setup.moves.get(log.size()+1)){
+					listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
+					mrX.use(addTicket.get(0));
+					listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
+					mrX.use(addTicket.get(1));
+				}
+				//3. reveal + hidden
+				else if (setup.moves.get(log.size()) && setup.moves.get(log.size() + 1)) {
+						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+						mrX.use(addTicket.get(0));
+						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
+						mrX.use(addTicket.get(1));
 				}
 			}
-				//doubleMove
-				else if(setup.moves.get(log.size()) && setup.moves.get(log.size()+1)){
-					for(Move allMove : moves){
-						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-						listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
-					}
 
-				}
-				else{
+			//Detectives' move
+			else{
 
-				}
+			}
+			log = ImmutableList.copyOf(listLogEntry);
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 
