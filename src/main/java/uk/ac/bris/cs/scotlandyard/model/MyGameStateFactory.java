@@ -246,7 +246,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		public GameState advance(Move move) {
 			this.moves = getAvailableMoves();
-			//for updating log, ticket, location, remaining, location after move
+			//for updating log, ticket, location, remaining, location, new detectives after move
 			List<LogEntry> listLogEntry = new ArrayList<>();
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
@@ -306,8 +306,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			else {
 				for(Player playerDetective : detectives){
 					if(move.commencedBy() == playerDetective.piece()) {
-						if (remaining.contains(move.commencedBy()) && playerDetective.piece() == move.commencedBy()) {
-//							if (playerDetective.use(addTicket.get(0)).equals(playerDetective.at(addLocation.get(0)))) {
+						if (remaining.contains(move.commencedBy())) {
 								listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 								//give the used ticket to mrX
 								playerDetective = playerDetective.use(addTicket.get(0));
@@ -315,13 +314,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 								//update moved detectives for returning state(if), and remaining pieces
 								playerDetective = playerDetective.at(addLocation.get(0));
 								updateDetectives.add(playerDetective);
-
-//							}
 						}
-						else updateDetectives.add(playerDetective);
+					}
+					else {
+						updateDetectives.add(playerDetective);
+						updatedRemaining.add(playerDetective.piece());
 					}
 				}
-				return new MyGameState(setup, remaining, ImmutableList.copyOf(listLogEntry), mrX, ImmutableList.copyOf(updateDetectives));
+				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX, ImmutableList.copyOf(updateDetectives));
 			}
 		}
 	}
