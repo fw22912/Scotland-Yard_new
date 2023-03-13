@@ -302,9 +302,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				mrX.use(move.tickets());
 
 				//updating remaining by eliminating mrX.piece
-				detectives.forEach(playerDetective -> {
-					updatedRemaining.add(playerDetective.piece());
-				});
+				detectives.forEach(playerDetective -> updatedRemaining.add(playerDetective.piece()));
 
 				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), log, mrX, detectives);
 			}
