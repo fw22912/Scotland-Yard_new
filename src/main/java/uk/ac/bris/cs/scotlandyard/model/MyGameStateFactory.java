@@ -309,7 +309,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				detectives.forEach(playerDetective -> updatedRemaining.add(playerDetective.piece()));
 				//updateRemaining(mrX); << does not work!
 //				System.out.println(move);
-				System.out.println("location: " + mrX.location());
 
 				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX, detectives);
 			}
@@ -317,14 +316,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//Detectives' move
 			else {
 				for(Player playerDetective : detectives){
-					if(move.commencedBy() == playerDetective.piece()){
-						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-						//give the used ticket to mrX
-						playerDetective = playerDetective.use(move.tickets());
-						//update moved detectives for returning state(if), and remaining pieces
-						playerDetective = playerDetective.at(addLocation.get(0));
-						updateRemaining(playerDetective);
-						mrX.give(addTicket.get(0));
+					if(move.commencedBy() == playerDetective.piece()) {
+						if (playerDetective.use(addTicket.get(0)).equals(playerDetective.at(addLocation.get(0)))) {
+							listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+							//give the used ticket to mrX
+							playerDetective = playerDetective.use(addTicket.get(0));
+							mrX = mrX.give((addTicket.get(0)));
+							//update moved detectives for returning state(if), and remaining pieces
+							playerDetective = playerDetective.at(addLocation.get(0));
+							updateRemaining(playerDetective);
+						}
 					}
 				}
 				return new MyGameState(setup, remaining, ImmutableList.copyOf(listLogEntry), mrX, detectives);
