@@ -237,6 +237,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public List<ScotlandYard.Ticket> visit(Move.DoubleMove move) {
 					newTicket.add(move.ticket1);
 					newTicket.add(move.ticket2);
+					newTicket.add(ScotlandYard.Ticket.DOUBLE);
 					return newTicket;
 				}
 			});
@@ -269,9 +270,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 
 				//Doublemove
-				else if(addTicket.size() == 2){
+				else if(addTicket.size() == 3){
 					// checking the log only for reveal tickets
 					//check if mrX is using double ticket
+					//reveal: True hidden: False
 					//1. reveal + hidden
 					if (setup.moves.get(log.size())) {
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
@@ -304,22 +306,23 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			//Detectives' move
 			else {
-				for(Player playerDetective : detectives){
-					if(move.commencedBy() == playerDetective.piece()) {
-						if (remaining.contains(move.commencedBy())) {
-								listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
-								//give the used ticket to mrX
-								playerDetective = playerDetective.use(addTicket.get(0));
-								mrX = mrX.give((addTicket.get(0)));
-								//update moved detectives for returning state(if), and remaining pieces
-								playerDetective = playerDetective.at(addLocation.get(0));
-								updateDetectives.add(playerDetective);
-						}
-					}
-					else {
-						updateDetectives.add(playerDetective);
-						updatedRemaining.add(playerDetective.piece());
-					}
+				for(Player playerDetective : detectives) {
+					 if (remaining.contains(playerDetective.piece())) {
+						 if (remaining.contains(move.commencedBy())) {
+							 if (move.commencedBy() == playerDetective.piece()) {
+								 listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+								 //give the used ticket to mrX
+								 playerDetective = playerDetective.use(addTicket.get(0));
+								 mrX = mrX.give((addTicket.get(0)));
+								 //update moved detectives for returning state(if), and remaining pieces
+								 playerDetective = playerDetective.at(addLocation.get(0));
+								 updateDetectives.add(playerDetective);
+							 } else {
+								 updateDetectives.add(playerDetective);
+								 updatedRemaining.add(playerDetective.piece());
+							 }
+						 }
+					 }
 				}
 				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX, ImmutableList.copyOf(updateDetectives));
 			}
