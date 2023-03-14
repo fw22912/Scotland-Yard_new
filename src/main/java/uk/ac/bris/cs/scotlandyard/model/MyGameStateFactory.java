@@ -115,14 +115,36 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
+			Integer availbleMoves = setup.moves.size() - log.size();
 			Set<Piece> thisWinner = new HashSet<>();
-			List<Integer> detectLocation = new ArrayList<>();
-			detectives.forEach(playerDetective -> detectLocation.add(playerDetective.location()));
-			for(Integer playerLocation : detectLocation){
+			List<Integer> detectiveOccupied = new ArrayList<>();
+//			Set<Piece> leftPlayers = new HashSet<>();
+			detectives.forEach(playerDetective -> detectiveOccupied.add(playerDetective.location()));
+
+			//Detectives win
+			//1. detective finish a move on the same station as Mr X
+			for(Integer playerLocation : detectiveOccupied){
 				if(playerLocation == mrX.location()){
 					detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
 					return ImmutableSet.copyOf(thisWinner);
 				}
+			}
+			//2. There are no unoccupied stations for Mr X to travel to
+			if(this.getAvailableMoves().isEmpty() && remaining.contains(mrX)){
+				detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
+				return ImmutableSet.copyOf(thisWinner);
+			}
+
+			//Mr X winning
+			//1. Mr X manages to fill the log and detectives subsequently fail to catch him with their final moves
+			if(availbleMoves == 0){
+				thisWinner.add(mrX.piece());
+				return ImmutableSet.copyOf(thisWinner);
+			}
+			//2. The detectives can no longer move nay of their playing pieces
+			if(this.getAvailableMoves().isEmpty() && !remaining.contains(mrX)){
+				thisWinner.add(mrX.piece());
+				return ImmutableSet.copyOf(thisWinner);
 			}
 			return ImmutableSet.of();
 		}
@@ -251,7 +273,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
-
+		//advance
 		@Nonnull
 		public GameState advance(Move move) {
 			this.moves = this.getAvailableMoves();
@@ -261,7 +283,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<Integer> addLocation = updateLocation(move);
 			Set<Piece> updatedRemaining = new HashSet<>();
 			List<Player> updateDetectives = new ArrayList<>();
-			List<Integer> updatedLocation = new ArrayList<>();
 
 			if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 			//1. move should be added to the log
@@ -276,7 +297,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					//updating mrX location
 					//move Mr X's position to their new destination
 					mrX = mrX.at(addLocation.get(0));
-					updatedLocation.add(addLocation.get(0));
 				}
 
 				//Doublemove
@@ -305,15 +325,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
 					//updating mrX location
-					updatedLocation.add(addLocation.get(1));
+					mrX = mrX.at(addLocation.get(1));
 				}
 				//adding up all the tickets that were used
 				mrX = mrX.use(move.tickets());
 				//updating remaining by eliminating mrX.piece
 				detectives.forEach(playerDetective -> updatedRemaining.add(playerDetective.piece()));
+				remaining = ImmutableSet.copyOf(updatedRemaining);
+				log = ImmutableList.copyOf(listLogEntry);
 
-
-				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX.at(updatedLocation.get(0)), detectives);
+				return new MyGameState(setup, remaining, log, mrX, detectives);
 			}
 
 			//Detectives' move
