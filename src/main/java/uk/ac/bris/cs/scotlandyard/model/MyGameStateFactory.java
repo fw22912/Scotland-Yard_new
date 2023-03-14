@@ -119,41 +119,41 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Integer availableMoves = setup.moves.size() - log.size();
 			Set<Piece> thisWinner = new HashSet<>();
 			List<Integer> detectiveOccupied = new ArrayList<>();
-//			Set<Piece> leftPlayers = new HashSet<>();
-			detectives.forEach(playerDetective -> detectiveOccupied.add(playerDetective.location()));
-			if(winner.isEmpty()){
-				//Detectives win
-				//1. detective finish a move on the same station as Mr X
-				for(Integer playerLocation : detectiveOccupied){
-					if(playerLocation == mrX.location()){
-						detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
-						moves = ImmutableSet.of();
-						return ImmutableSet.copyOf(thisWinner);
-					}
+			Set<Piece> detectivePiece = new HashSet<>();
+			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
+
+			//Detectives win
+			//1. detective finish a move on the same station as Mr X
+			for(Player playerDetective : detectives){
+				if(playerDetective.location() == this.mrX.location()){
+					winner = ImmutableSet.copyOf(detectivePiece);
+					return winner;
 				}
-				//2. There are no unoccupied stations for Mr X to travel to
-				if(this.getAvailableMoves().isEmpty() && this.remaining.contains(mrX.piece())){
-					detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
-					moves = ImmutableSet.of();
-					return ImmutableSet.copyOf(thisWinner);
+			}
+
+			//2. There are no unoccupied stations for Mr X to travel to
+			if(this.getAvailableMoves().isEmpty() && this.remaining.contains(mrX.piece())){
+				detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
+				return ImmutableSet.copyOf(thisWinner);
+			}
+
+			if(!getAvailableMoves().isEmpty()){
+				for(Player playerDetective : detectives){
+					if(remaining.contains(playerDetective.piece())) return ImmutableSet.of();
 				}
+			}
+
 				//Mr X winning
 				//1. Mr X manages to fill the log and detectives subsequently fail to catch him with their final moves
 				if(availableMoves == 0){
 					thisWinner.add(mrX.piece());
-					moves = ImmutableSet.of();
 					return ImmutableSet.copyOf(thisWinner);
 				}
 				//2. The detectives can no longer move nay of their playing pieces
 				if(this.getAvailableMoves().isEmpty() && !this.remaining.contains(mrX.piece())){
-					for(Player playerDetective : detectives){
-						thisWinner.add(mrX.piece());
-						return ImmutableSet.copyOf(thisWinner);
-					}
-				}
-			}
-			else{
-				moves = ImmutableSet.of();
+					thisWinner.add(mrX.piece());
+					return ImmutableSet.copyOf(thisWinner);
+
 			}
 			return winner;
 		}
@@ -163,9 +163,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
 			Set<Move.SingleMove> availableMoves = new HashSet<>();
 			Set<Integer> detectiveOccupied = new HashSet<>();
-//			for (Player detective : detectives) {
-//				detectiveOccupied.add(detective.location());
-//			}
 
 			detectives.forEach(detective -> detectiveOccupied.add(detective.location()));
 
@@ -199,12 +196,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Move.DoubleMove> doubleMoves = new HashSet<>();
 			//storing firstMoves
 			Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
+			Set<Move.SingleMove> secondMoves = new HashSet<>();
 			//availableMoves for checking the number of left available moves
 			Integer availableMoves = setup.moves.size() - log.size();
 
 			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
 				for (Move.SingleMove firstMove : firstMoves) {
-					Set<Move.SingleMove> secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
+					secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
 					for (Move.SingleMove secondMove : secondMoves) {
 						if ((player.hasAtLeast(firstMove.ticket, 2)
 								&& firstMove.ticket == secondMove.ticket)
@@ -215,6 +213,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 				}
 			}
+			if(firstMoves.isEmpty() && secondMoves.isEmpty()){
+				return ImmutableSet.of();
+			}
 
 			return ImmutableSet.copyOf(doubleMoves);
 		}
@@ -223,6 +224,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> newMoves = new HashSet<>();
+			if(!winner.isEmpty()) return ImmutableSet.of();
 			if (this.remaining.contains(mrX.piece())) {
 				//How to make single moves
 				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, mrX, mrX.location());
