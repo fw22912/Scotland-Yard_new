@@ -115,8 +115,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			if (winner != null) return winner;
-			else return ImmutableSet.of();
+			Set<Piece> thisWinner = new HashSet<>();
+			List<Integer> detectLocation = new ArrayList<>();
+			detectives.forEach(playerDetective -> detectLocation.add(playerDetective.location()));
+			for(Integer playerLocation : detectLocation){
+				if(playerLocation == mrX.location()){
+					detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
+					return ImmutableSet.copyOf(thisWinner);
+				}
+			}
+			return ImmutableSet.of();
 		}
 
 		//helper method for Singlemove
@@ -128,7 +136,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 //				detectiveOccupied.add(detective.location());
 //			}
 
-			detectives.stream().forEach(detective -> detectiveOccupied.add(detective.location()));
+			detectives.forEach(detective -> detectiveOccupied.add(detective.location()));
 
 			for (int destination : setup.graph.adjacentNodes(source)) {
 				// TODO find out if destination is occupied by a detective
@@ -206,8 +214,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		//helper method for updating the location
 		public static List<Integer> updateLocation(Move move){
-			List<Integer> newDestination = new ArrayList<>();
 			return move.accept(new Move.Visitor<List<Integer>>() {
+				List<Integer> newDestination = new ArrayList<>();
 				@Override
 				public List<Integer> visit(Move.SingleMove move) {
 					newDestination.add(move.destination);
@@ -225,8 +233,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		//helper method for updating ticket
 		public static List<ScotlandYard.Ticket> updateTicket(Move move){
-			List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
 			return move.accept(new Move.Visitor<List<ScotlandYard.Ticket>>() {
+				List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
+
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.SingleMove move) {
 					newTicket.add(move.ticket);
@@ -237,7 +246,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public List<ScotlandYard.Ticket> visit(Move.DoubleMove move) {
 					newTicket.add(move.ticket1);
 					newTicket.add(move.ticket2);
-					newTicket.add(ScotlandYard.Ticket.DOUBLE);
 					return newTicket;
 				}
 			});
@@ -246,20 +254,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public GameState advance(Move move) {
-			this.moves = getAvailableMoves();
+			this.moves = this.getAvailableMoves();
 			//for updating log, ticket, location, remaining, location, new detectives after move
-			List<LogEntry> listLogEntry = new ArrayList<>();
+			List<LogEntry> listLogEntry = new ArrayList<>(log);
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
 			Set<Piece> updatedRemaining = new HashSet<>();
 			List<Player> updateDetectives = new ArrayList<>();
+			List<Integer> updatedLocation = new ArrayList<>();
 
 			if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 			//1. move should be added to the log
 			//MrX's move
-			if (move.commencedBy() == mrX.piece()) {
+			if (move.commencedBy() == mrX.piece() && remaining.contains(mrX.piece())) {
 				//Singlemove
-				if(addTicket.size() == 1){
+				if(addLocation.size() == 1){
 					if(setup.moves.get(log.size())){
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 					}
@@ -267,15 +276,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					//updating mrX location
 					//move Mr X's position to their new destination
 					mrX = mrX.at(addLocation.get(0));
+					updatedLocation.add(addLocation.get(0));
 				}
 
 				//Doublemove
-				else if(addTicket.size() == 3){
+				else{
 					// checking the log only for reveal tickets
 					//check if mrX is using double ticket
 					//reveal: True hidden: False
-					//1. reveal + hidden
-					if (setup.moves.get(log.size())) {
+					//1. reveal + reveal << Why do we need this
+					if(setup.moves.get(log.size()) && setup.moves.get(log.size()+1)){
+						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
+						listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
+					}
+					//2. reveal + hidden
+					else if (setup.moves.get(log.size())) {
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
@@ -289,19 +304,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
 						listLogEntry.add(LogEntry.hidden(addTicket.get(1)));
 					}
-					mrX = mrX.at(addLocation.get(1));
-					mrX.use(ScotlandYard.Ticket.DOUBLE);
 					//updating mrX location
+					updatedLocation.add(addLocation.get(1));
 				}
 				//adding up all the tickets that were used
 				mrX = mrX.use(move.tickets());
-
 				//updating remaining by eliminating mrX.piece
 				detectives.forEach(playerDetective -> updatedRemaining.add(playerDetective.piece()));
-				//updateRemaining(mrX); << does not work!
-//				System.out.println(move);
 
-				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX, detectives);
+
+				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX.at(updatedLocation.get(0)), detectives);
 			}
 
 			//Detectives' move
@@ -309,22 +321,28 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				for(Player playerDetective : detectives) {
 					 if (remaining.contains(playerDetective.piece())) {
 						 if (remaining.contains(move.commencedBy())) {
+							 //if playerDetective can move
 							 if (move.commencedBy() == playerDetective.piece()) {
-								 listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 								 //give the used ticket to mrX
 								 playerDetective = playerDetective.use(addTicket.get(0));
 								 mrX = mrX.give((addTicket.get(0)));
 								 //update moved detectives for returning state(if), and remaining pieces
 								 playerDetective = playerDetective.at(addLocation.get(0));
 								 updateDetectives.add(playerDetective);
-							 } else {
+							 }
+							 //if playerDetective cannot move do not update location, tickets but only remaining and detectives
+							 else {
 								 updateDetectives.add(playerDetective);
 								 updatedRemaining.add(playerDetective.piece());
 							 }
 						 }
 					 }
 				}
-				return new MyGameState(setup, ImmutableSet.copyOf(updatedRemaining), ImmutableList.copyOf(listLogEntry), mrX, ImmutableList.copyOf(updateDetectives));
+				remaining = ImmutableSet.copyOf(updatedRemaining);
+				detectives = ImmutableList.copyOf(updateDetectives);
+
+				return new MyGameState(setup, remaining, log, mrX, detectives);
+
 			}
 		}
 	}
