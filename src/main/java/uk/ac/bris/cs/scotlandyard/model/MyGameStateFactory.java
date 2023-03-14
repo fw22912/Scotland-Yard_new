@@ -45,6 +45,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 			this.moves = ImmutableSet.of();
+			this.winner = ImmutableSet.of();
 
 			//throwing exceptions
 			if (mrX == null) throw new NullPointerException("testNullMrXShouldThrow: mrX is empty!");
@@ -115,38 +116,46 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			Integer availbleMoves = setup.moves.size() - log.size();
+			Integer availableMoves = setup.moves.size() - log.size();
 			Set<Piece> thisWinner = new HashSet<>();
 			List<Integer> detectiveOccupied = new ArrayList<>();
 //			Set<Piece> leftPlayers = new HashSet<>();
 			detectives.forEach(playerDetective -> detectiveOccupied.add(playerDetective.location()));
-
-			//Detectives win
-			//1. detective finish a move on the same station as Mr X
-			for(Integer playerLocation : detectiveOccupied){
-				if(playerLocation == mrX.location()){
+			if(winner.isEmpty()){
+				//Detectives win
+				//1. detective finish a move on the same station as Mr X
+				for(Integer playerLocation : detectiveOccupied){
+					if(playerLocation == mrX.location()){
+						detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
+						moves = ImmutableSet.of();
+						return ImmutableSet.copyOf(thisWinner);
+					}
+				}
+				//2. There are no unoccupied stations for Mr X to travel to
+				if(this.getAvailableMoves().isEmpty() && this.remaining.contains(mrX.piece())){
 					detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
+					moves = ImmutableSet.of();
 					return ImmutableSet.copyOf(thisWinner);
 				}
+				//Mr X winning
+				//1. Mr X manages to fill the log and detectives subsequently fail to catch him with their final moves
+				if(availableMoves == 0){
+					thisWinner.add(mrX.piece());
+					moves = ImmutableSet.of();
+					return ImmutableSet.copyOf(thisWinner);
+				}
+				//2. The detectives can no longer move nay of their playing pieces
+				if(this.getAvailableMoves().isEmpty() && !this.remaining.contains(mrX.piece())){
+					for(Player playerDetective : detectives){
+						thisWinner.add(mrX.piece());
+						return ImmutableSet.copyOf(thisWinner);
+					}
+				}
 			}
-			//2. There are no unoccupied stations for Mr X to travel to
-			if(this.getAvailableMoves().isEmpty() && remaining.contains(mrX)){
-				detectives.forEach(playerDetective -> thisWinner.add(playerDetective.piece()));
-				return ImmutableSet.copyOf(thisWinner);
+			else{
+				moves = ImmutableSet.of();
 			}
-
-			//Mr X winning
-			//1. Mr X manages to fill the log and detectives subsequently fail to catch him with their final moves
-			if(availbleMoves == 0){
-				thisWinner.add(mrX.piece());
-				return ImmutableSet.copyOf(thisWinner);
-			}
-			//2. The detectives can no longer move nay of their playing pieces
-			if(this.getAvailableMoves().isEmpty() && !remaining.contains(mrX)){
-				thisWinner.add(mrX.piece());
-				return ImmutableSet.copyOf(thisWinner);
-			}
-			return ImmutableSet.of();
+			return winner;
 		}
 
 		//helper method for Singlemove
