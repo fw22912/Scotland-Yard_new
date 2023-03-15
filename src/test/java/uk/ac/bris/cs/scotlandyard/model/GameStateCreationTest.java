@@ -58,7 +58,6 @@ public class GameStateCreationTest extends ParameterisedModelTestBase {
 				new Player(RED, defaultMrXTickets(), 2));
 	}
 
-
 	@Test(expected = IllegalArgumentException.class)
 	public void testMoreThanOneMrXShouldThrow() {
 		gameStateFactory.build(standard24MoveSetup(),
