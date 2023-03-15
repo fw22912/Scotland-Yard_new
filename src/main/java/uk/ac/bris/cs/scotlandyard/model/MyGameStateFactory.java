@@ -148,7 +148,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			//MrX wins
 			//1. MrX manages to fill the log and the detectives fails to catch
-			if (setup.moves.size() - log.size() == 0 && remaining.contains(mrX.piece())) {
+			if (availableMoves == 0) {
 				finalWinner.add(mrX.piece());
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("Here at 3");
@@ -161,9 +161,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				System.out.println("Here at 4");
 			}
 
-			int howManyInvalid = 0;
 
 			//3. no ticket
+			int howManyInvalid = 0;
 			for (Player detective : detectives) {
 				if (detective.tickets().values().stream().allMatch(count -> count == 0)) {
 					howManyInvalid += 1;
@@ -180,8 +180,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					System.out.println("Here at 5.2");
 				}
 			}
-
-			System.out.println("=====================LOOP ENDS HERE=====================");
 			return winner;
 		}
 
@@ -404,7 +402,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 				if (updatedRemaining.isEmpty()) {
 					remaining = ImmutableSet.of(mrX.piece());
-				} else {
+				}
+				else {
 					remaining = ImmutableSet.copyOf(updatedRemaining);
 				}
 
