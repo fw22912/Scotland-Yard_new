@@ -117,10 +117,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			Integer availableMoves = setup.moves.size() - log.size();
+			int availableMoves = setup.moves.size() - log.size();
 			Set<Piece> detectivePiece = new HashSet<>();
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
 			Set<Piece> finalWinner = new HashSet<>();
+			System.out.println("====================LOOP STARTS HERE===================");
 
 			//Detectives win
 			//1. detective finish a move on the same station as mrX
@@ -155,7 +156,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			//2. detectives can no longer move any of their playing pieces
-			if(getAvailableMoves().isEmpty() && !remaining.containsAll(detectivePiece)){
+			if(getAvailableMoves().isEmpty() && !remaining.isEmpty()){
 				finalWinner.add(mrX.piece());
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("Here at 4");
