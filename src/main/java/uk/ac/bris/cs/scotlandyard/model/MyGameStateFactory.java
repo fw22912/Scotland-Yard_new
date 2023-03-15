@@ -125,6 +125,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				for (Player playerDetective : detectives) {
 					if (playerDetective.location() == this.mrX.location()) {
 						winner = ImmutableSet.copyOf(detectivePiece);
+
 					}
 				}
 
