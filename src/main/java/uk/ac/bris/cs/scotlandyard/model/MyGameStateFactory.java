@@ -155,17 +155,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			//2. detectives can no longer move any of their playing pieces
-			if(getAvailableMoves().isEmpty() && remaining.containsAll(detectivePiece)){
+			if(getAvailableMoves().isEmpty() && !remaining.containsAll(detectivePiece)){
 				finalWinner.add(mrX.piece());
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("Here at 4");
 			}
+
+			int howManyInvalid = 0;
+
 			//3. no ticket
 			for (Player detective : detectives) {
 				if (detective.tickets().values().stream().allMatch(count -> count == 0)) {
-					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("Here at 5");
-					return winner;
+					howManyInvalid += 1;
+				}
+			}
+
+			if(howManyInvalid == detectives.size()){
+				if(!getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())){
+					winner = ImmutableSet.of(mrX.piece());
+					System.out.println("Here at 5.1");
+				}
+				else {
+					winner = ImmutableSet.of();
+					System.out.println("Here at 5.2");
 				}
 			}
 
