@@ -120,7 +120,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Piece> detectivePiece = new HashSet<>();
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
 			Set<Piece> finalWinner = new HashSet<>();
-			Integer invalidDetectives = 0;
 			Set<Piece> originalRemaining = this.remaining;
 
 			//Detectives win
@@ -128,23 +127,36 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			for(Player playerDetective : detectives){
 				if(playerDetective.location() == mrX.location()){
 					winner = ImmutableSet.copyOf(detectivePiece);
+					System.out.println("Here at 1");
+					System.out.println("winner: detectives " + winner);
 					return winner;
 				}
+			}
+			this.remaining = ImmutableSet.of(mrX.piece());
+
+			//2. mrX got stuck
+			if(getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
+				winner = ImmutableSet.copyOf(detectivePiece);
+				System.out.println("Here at 2");
+				System.out.println("eng.....? winner: detectives " + winner);
+				return winner;
 			}
 
 			//MrX wins
 			//1. MrX manages to fill the log and the detectives fails to catch
 			if(setup.moves.size() - log.size() == 0 && remaining.contains(mrX.piece())){
 				finalWinner.add(mrX.piece());
+				System.out.println("Here at 3");
+				System.out.println("winner: MrX " + winner);
 				winner = ImmutableSet.copyOf(finalWinner);
-				return winner;
 			}
 
 			//2. detectives can no longer move any of their playing pieces
 			if(getAvailableMoves().isEmpty() && remaining.containsAll(detectivePiece)){
 				finalWinner.add(mrX.piece());
-				this.winner = ImmutableSet.copyOf(finalWinner);
-				return winner;
+				System.out.println("Here at 4");
+				System.out.println("winner: MrX " + winner);
+				winner = ImmutableSet.copyOf(finalWinner);
 			}
 
 			//2. the detectives can no longer move any of their playing pieces
@@ -159,12 +171,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//return mrX as a winner
 			if (!anyDetectiveHasValidMove) {
 				finalWinner.add(mrX.piece());
+				System.out.println("Here at 5");
+				System.out.println("winner: MrX " + winner);
 				winner = ImmutableSet.copyOf(finalWinner);
 			}
 
 			//returning to original remaining value
 			this.remaining = ImmutableSet.copyOf(originalRemaining);
-
+			System.out.println("=====================LOOP ENDS HERE=====================");
 			return winner;
 		}
 
