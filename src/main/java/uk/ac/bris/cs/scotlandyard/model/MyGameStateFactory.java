@@ -102,10 +102,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
 			if (piece.isMrX()) return Optional.of(ticket -> mrX.tickets().get(ticket));
-			else if (piece.isDetective()) {
+			else{
 				for (Player playerDetective : detectives) {
-					if (playerDetective.piece().equals(piece))
+					if (playerDetective.piece().equals(piece)){
 						return Optional.of(ticket -> playerDetective.tickets().get(ticket));
+					}
 				}
 			}
 			return Optional.empty();
@@ -133,13 +134,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			//2. mrX got stuck
 			if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
-				if(log.size() == 0){
-					winner = ImmutableSet.of();
+				if(remaining.size() != getPlayers().size()){
+					winner = ImmutableSet.of(mrX.piece());
+					System.out.println("Here at 2.1");
 					return winner;
 				}
 				else{
 					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("Here at 2");
+					System.out.println("Here at 2.2");
 					return winner;
 				}
 			}
