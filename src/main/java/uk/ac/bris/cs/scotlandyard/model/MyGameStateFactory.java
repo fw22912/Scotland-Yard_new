@@ -126,46 +126,46 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			for(Player playerDetective : detectives){
 				if(playerDetective.location() == mrX.location()){
 					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("mrX got caught");
-					System.out.println("winner: detectives " + winner);
+					System.out.println("Here at 1");
 					return winner;
 				}
 			}
 
 			//2. mrX got stuck
 			if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
-				winner = ImmutableSet.copyOf(detectivePiece);
-				System.out.println("mrX got stuck");
-				System.out.println("winner: detectives " + winner);
-				return winner;
+				if(log.size() == 0){
+					winner = ImmutableSet.of();
+					return winner;
+				}
+				else{
+					winner = ImmutableSet.copyOf(detectivePiece);
+					System.out.println("Here at 2");
+					return winner;
+				}
 			}
 
 			//MrX wins
 			//1. MrX manages to fill the log and the detectives fails to catch
 			if (setup.moves.size() - log.size() == 0 && remaining.contains(mrX.piece())) {
 				finalWinner.add(mrX.piece());
-				System.out.println("no rounds");
-				System.out.println("winner: MrX " + winner);
 				winner = ImmutableSet.copyOf(finalWinner);
+				System.out.println("Here at 3");
 			}
 
 			//2. detectives can no longer move any of their playing pieces
 			if(getAvailableMoves().isEmpty() && remaining.containsAll(detectivePiece)){
 				finalWinner.add(mrX.piece());
-				System.out.println("no move");
-				System.out.println("winner: MrX " + winner);
 				winner = ImmutableSet.copyOf(finalWinner);
+				System.out.println("Here at 4");
 			}
 			//3. no ticket
 			for (Player detective : detectives) {
 				if (detective.tickets().values().stream().allMatch(count -> count == 0)) {
 					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("detective runs out of tickets");
-					System.out.println("winner: detectives " + winner);
+					System.out.println("Here at 5");
 					return winner;
 				}
 			}
-
 
 			System.out.println("=====================LOOP ENDS HERE=====================");
 			return winner;
