@@ -121,13 +121,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
 			Set<Piece> finalWinner = new HashSet<>();
 			Integer invalidDetectives = 0;
+			Set<Piece> originalRemaining = this.remaining;
 
 			//Detectives win
 			//1. detective finish a move on the same station as mrX
 			for(Player playerDetective : detectives){
 				if(playerDetective.location() == mrX.location()){
-						winner = ImmutableSet.copyOf(detectivePiece);
-						return winner;
+					winner = ImmutableSet.copyOf(detectivePiece);
+					return winner;
 				}
 			}
 
@@ -148,22 +149,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			//2. the detectives can no longer move any of their playing pieces
 			boolean anyDetectiveHasValidMove = false;
-			this.remaining = ImmutableSet.copyOf(detectivePiece);
 
+			this.remaining = ImmutableSet.copyOf(detectivePiece);
 			for(Player playerDetective : detectives) {
 				if(!getAvailableMoves().isEmpty() && remaining.contains(playerDetective.piece())) {
-					System.out.println("Reached!");
 					anyDetectiveHasValidMove = true;
 				}
 			}
+			//return mrX as a winner
 			if (!anyDetectiveHasValidMove) {
-				System.out.println("ok!: " + anyDetectiveHasValidMove);
 				finalWinner.add(mrX.piece());
 				winner = ImmutableSet.copyOf(finalWinner);
-				System.out.println(winner);
 			}
 
-			System.out.println("---------------------test END----------------------");
+			//returning to original remaining value
+			this.remaining = ImmutableSet.copyOf(originalRemaining);
+
 			return winner;
 		}
 
@@ -206,11 +207,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Set<Move.DoubleMove> doubleMoves = new HashSet<>();
 			//storing firstMoves
 			Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
-			Set<Move.SingleMove> secondMoves;
+			Set<Move.SingleMove> secondMoves = new HashSet<>();
 			//availableMoves for checking the number of left available moves
 			Integer availableMoves = setup.moves.size() - log.size();
 
-			if (player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
+			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
 				for (Move.SingleMove firstMove : firstMoves) {
 					secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
 					for (Move.SingleMove secondMove : secondMoves) {
@@ -225,7 +226,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 				}
 			}
-			if (firstMoves.isEmpty()){
+			if(firstMoves.isEmpty()){
 				return ImmutableSet.of();
 			}
 
@@ -237,7 +238,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> newMoves = new HashSet<>();
 
-			if (!winner.isEmpty()) return ImmutableSet.of();
+			if(!winner.isEmpty()) return ImmutableSet.of();
 
 			if (this.remaining.contains(mrX.piece())) {
 				//How to make single moves
@@ -298,6 +299,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
+		//advance
 		@Nonnull
 		public GameState advance(Move move) {
 			this.moves = this.getAvailableMoves();
@@ -326,9 +328,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 				//Doublemove
 				else{
-					// checking the log only for reveal tickets
-					//check if mrX is using double ticket
-					//reveal: True hidden: False
+					//check if mrX is using double ticket - reveal: True hidden: False
 					//1. reveal + reveal << Why do we need this
 					if(setup.moves.get(log.size()) && setup.moves.get(log.size()+1)){
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
@@ -365,22 +365,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//Detectives' move
 			else {
 				for(Player playerDetective : detectives) {
-					 if (remaining.contains(playerDetective.piece())) {
-						 if (remaining.contains(move.commencedBy())) {
-							 //if playerDetective can move
-							 if (move.commencedBy() == playerDetective.piece()) {
-								 //give the used ticket to mrX
-								 playerDetective = playerDetective.use(addTicket.get(0));
-								 mrX = mrX.give((addTicket.get(0)));
-								 //update moved detectives for returning state(if), and remaining pieces
-								 playerDetective = playerDetective.at(addLocation.get(0));
-							 }
-							 //if playerDetective cannot move do not update location, tickets but only remaining and detectives
-							 else {
-								 updatedRemaining.add(playerDetective.piece());
-							 }
-						 }
-					 }
+					if (remaining.contains(playerDetective.piece())) {
+						if (remaining.contains(move.commencedBy())) {
+							//if playerDetective can move
+							if (move.commencedBy() == playerDetective.piece()) {
+								//give the used ticket to mrX
+								playerDetective = playerDetective.use(addTicket.get(0));
+								mrX = mrX.give((addTicket.get(0)));
+								//update moved detectives for returning state(if), and remaining pieces
+								playerDetective = playerDetective.at(addLocation.get(0));
+							}
+							//if playerDetective cannot move do not update location, tickets but only remaining and detectives
+							else {
+								updatedRemaining.add(playerDetective.piece());
+							}
+						}
+					}
 
 					updateDetectives.add(playerDetective);
 				}
