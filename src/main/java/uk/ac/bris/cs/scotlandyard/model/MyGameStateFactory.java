@@ -117,70 +117,64 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			int availableMoves = setup.moves.size() - log.size();
+			System.out.println("====================LOOP STARTS HERE========================");
+			///Determining winner
 			Set<Piece> detectivePiece = new HashSet<>();
-			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
+			List<Player> onlyMrX = new ArrayList<>();
 			Set<Piece> finalWinner = new HashSet<>();
-			System.out.println("====================LOOP STARTS HERE===================");
+			onlyMrX.add(mrX);
+			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
 
 			//Detectives win
-			//1. detective finish a move on the same station as mrX
-			for(Player playerDetective : detectives){
-				if(playerDetective.location() == mrX.location()){
-					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("Here at 1");
-					return winner;
-				}
+			//1. detectives catch mrX
+			if(detectives.stream().anyMatch(playerDetecive-> playerDetecive.location() == mrX.location())){
+				System.out.println("Here at 1");
+				winner = ImmutableSet.copyOf(detectivePiece);
+				System.out.println(winner);
 			}
-
-			//2. mrX got stuck
-			if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
-				if(remaining.size() != getPlayers().size()){
-					winner = ImmutableSet.of(mrX.piece());
-					System.out.println("Here at 2.1");
-				}
-				else{
-					winner = ImmutableSet.copyOf(detectivePiece);
-					System.out.println("Here at 2.2");
-				}
-				return winner;
+			//2. no unoccupied stations for MrX to travel to
+			else if(remaining.contains(mrX.piece()) && getPlayerMove(onlyMrX).isEmpty()){
+				System.out.println("Here at 2");
+				winner = ImmutableSet.copyOf(detectivePiece);
 			}
-
 			//MrX wins
-			//1. MrX manages to fill the log and the detectives fails to catch
-			if (availableMoves == 0) {
+			//1. mrX fills the log && detectives fails to catch
+			else if(setup.moves.size() - log.size() == 0 && getPlayerMove(detectives).isEmpty()){
 				finalWinner.add(mrX.piece());
-				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("Here at 3");
-			}
-
-			//2. detectives can no longer move any of their playing pieces
-			if(getAvailableMoves().isEmpty() && !remaining.isEmpty()){
-				finalWinner.add(mrX.piece());
 				winner = ImmutableSet.copyOf(finalWinner);
+			}
+			//2.detectives cannot move
+			else if(getPlayerMove(detectives).isEmpty()){
+				finalWinner.add(mrX.piece());
 				System.out.println("Here at 4");
+				winner = ImmutableSet.copyOf(finalWinner);
+			}
+			else if(remaining.contains(mrX.piece()) && setup.moves.size() == log.size()){
+				finalWinner.add(mrX.piece());
+				System.out.println("Here at 5");
+				winner = ImmutableSet.copyOf(finalWinner);
+			}
+			else {
+				System.out.println("Here at 6");
+				Set<Piece> emptySet = new HashSet<>();
+				winner = ImmutableSet.copyOf(emptySet);
+				System.out.println(winner);
 			}
 
-
-			//3. no ticket
-			int howManyInvalid = 0;
-			for (Player detective : detectives) {
-				if (detective.tickets().values().stream().allMatch(count -> count == 0)) {
-					howManyInvalid += 1;
-				}
-			}
-
-			if(howManyInvalid == detectives.size()){
-				if(!getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())){
-					winner = ImmutableSet.of(mrX.piece());
-					System.out.println("Here at 5.1");
-				}
-				else {
-					winner = ImmutableSet.of();
-					System.out.println("Here at 5.2");
-				}
-			}
 			return winner;
+		}
+
+		//helper function
+		private ImmutableSet<Move> getPlayerMove(List<Player> movesWanted){
+			Set<Move> thisMove = new HashSet<>();
+			for(Player player : movesWanted){
+				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
+				Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
+				thisMove.addAll(singleMoves);
+				thisMove.addAll(doubleMoves);
+			}
+			return ImmutableSet.copyOf(thisMove);
 		}
 
 
