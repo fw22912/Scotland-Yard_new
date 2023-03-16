@@ -138,13 +138,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				if(remaining.size() != getPlayers().size()){
 					winner = ImmutableSet.of(mrX.piece());
 					System.out.println("Here at 2.1");
-					return winner;
 				}
 				else{
 					winner = ImmutableSet.copyOf(detectivePiece);
 					System.out.println("Here at 2.2");
-					return winner;
 				}
+				return winner;
 			}
 
 			//MrX wins
@@ -185,7 +184,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 
-		//helper method for Singlemove
+		//helper method for SingleMove
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
 			// TODO create an empty collection of some sort, say, HashSet, to store all the SingleMove we generate
 			Set<Move.SingleMove> availableMoves = new HashSet<>();
@@ -218,14 +217,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(availableMoves);
 		}
 
-		//helper method for Doublemove
+		//helper method for DoubleMove
 		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log) {
 			Set<Move.DoubleMove> doubleMoves = new HashSet<>();
 			//storing firstMoves
 			Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
-			Set<Move.SingleMove> secondMoves = new HashSet<>();
+			Set<Move.SingleMove> secondMoves;
 			//availableMoves for checking the number of left available moves
-			Integer availableMoves = setup.moves.size() - log.size();
+			int availableMoves = setup.moves.size() - log.size();
 
 			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
 				for (Move.SingleMove firstMove : firstMoves) {
@@ -331,7 +330,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//1. move should be added to the log
 			//MrX's move
 			if (move.commencedBy() == mrX.piece() && remaining.contains(mrX.piece())) {
-				//Singlemove
+				//SingleMove
 				if(addLocation.size() == 1){
 					if(setup.moves.get(log.size())){
 						listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
@@ -342,7 +341,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					mrX = mrX.at(addLocation.get(0));
 				}
 
-				//Doublemove
+				//DoubleMove
 				else{
 					//check if mrX is using double ticket - reveal: True hidden: False
 					//1. reveal + reveal << Why do we need this
@@ -375,7 +374,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				remaining = ImmutableSet.copyOf(updatedRemaining);
 				log = ImmutableList.copyOf(listLogEntry);
 
-				return new MyGameState(setup, remaining, log, mrX, detectives);
 			}
 
 			//Detectives' move
@@ -409,9 +407,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 
 				detectives = ImmutableList.copyOf(updateDetectives);
-				return new MyGameState(setup, remaining, log, mrX, detectives);
 
 			}
+			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 	}
 
