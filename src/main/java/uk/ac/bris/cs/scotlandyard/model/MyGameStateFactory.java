@@ -113,26 +113,31 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					Player player = pieceMatchesPlayer(piece);
 					assert player != null;
 					if(!getPlayerMove(List.of(player)).isEmpty()){
-						System.out.println("Dropped by...");
+						System.out.println("Dropped by... " + player.piece());
 						updateRemaining.add(player.piece());
-
+					}
 				}
-					updateRemaining.add(mrX.piece());
+				updateRemaining.add(mrX.piece());
 
-				}
 				//Iterate through updated remaining and look through all possible moves
 				for(Piece piece : updateRemaining){
 					Player player = pieceMatchesPlayer(piece);
 					assert player != null;
 					System.out.println(player.piece() + " dropped by");
 					System.out.println("Here at 6");
-					allMoves.addAll(getPlayerMove(List.of(player)));
+					allMoves.addAll(makeSingleMoves(setup, detectives,player, player.location()));
+					allMoves.addAll(makeDoubleMoves(setup, detectives,player, player.location(), log));
+					System.out.println(player.piece() + " moves: " + allMoves);
 				}
+				//mrX being cornered
 				if(allMoves.isEmpty()){
 					System.out.println("Here at 6.1");
 					winner = ImmutableSet.copyOf(detectivePiece);
 				}
-				else winner = ImmutableSet.of();
+				else {
+					System.out.println("Here at 6.2");
+					winner = ImmutableSet.of();
+				}
 				this.moves = ImmutableSet.copyOf(allMoves);
 				System.out.println("remaining: " + remaining);
 				System.out.println("updated remaining: " + updateRemaining);
