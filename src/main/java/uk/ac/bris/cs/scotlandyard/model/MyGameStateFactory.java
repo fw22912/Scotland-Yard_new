@@ -75,7 +75,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<Player> onlyMrX = new ArrayList<>();
 			Set<Piece> finalWinner = new HashSet<>();
 			Set<Move> allMoves = new HashSet<>();
-			Set<Piece> updateRemaining = new HashSet<>();
 
 			onlyMrX.add(mrX);
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
@@ -88,19 +87,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				System.out.println("move: " + moves);
 			}
 			//2. no unoccupied stations for MrX to travel to
-			else if(remaining.contains(mrX.piece()) && getPlayerMove(onlyMrX).isEmpty()){
+			if(remaining.contains(mrX.piece()) && getPlayerMove(onlyMrX).isEmpty()){
 				System.out.println("Here at 2");
 				winner = ImmutableSet.copyOf(detectivePiece);
 				System.out.println("move: " + moves);
 			}
 			//MrX wins
-			//2.detectives cannot move
+			//1. Detectives cannot move
 			else if(getPlayerMove(detectives).isEmpty()){
 				finalWinner.add(mrX.piece());
 				System.out.println("Here at 3");
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("move: " + moves);
 			}
+			//mrX managed to fill the log and detectives failed to catch mrX
 			else if(remaining.contains(mrX.piece()) && setup.moves.size() == log.size()){
 				finalWinner.add(mrX.piece());
 				System.out.println("Here at 4");
@@ -108,34 +108,39 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				System.out.println("move: " + moves);
 			}
 			else {
-				//Iterate through the remaining and find which players can move
-				for(Piece piece : remaining){
-					Player player = pieceMatchesPlayer(piece);
-					assert player != null;
-					if(!getPlayerMove(List.of(player)).isEmpty()){
-						System.out.println("Dropped by...");
-						updateRemaining.add(player.piece());
-
+				Set<Piece> originalRemaining = new HashSet<>(this.remaining);
+				//iterate through the pieces in the remaining and add their possible moves if not null
+				for(Piece piece : originalRemaining){
+					Player currentPlayer = pieceMatchesPlayer(piece);
+					System.out.println("Player: " + currentPlayer + "  Piece: " + piece );
+					assert currentPlayer != null;
+					if(!getPlayerMove(List.of(currentPlayer)).isEmpty()){
+						allMoves.addAll(getPlayerMove(List.of(currentPlayer)));
+					}
 				}
-					updateRemaining.add(mrX.piece());
-
-				}
-				//Iterate through updated remaining and look through all possible moves
-				for(Piece piece : updateRemaining){
-					Player player = pieceMatchesPlayer(piece);
-					assert player != null;
-					System.out.println(player.piece() + " dropped by");
-					System.out.println("Here at 6");
-					allMoves.addAll(getPlayerMove(List.of(player)));
-				}
+				//detectives cannot move(
 				if(allMoves.isEmpty()){
 					System.out.println("Here at 6.1");
-					winner = ImmutableSet.copyOf(detectivePiece);
+					//all players cannot move
+					if(getPlayerMove(detectives).isEmpty()){
+						System.out.println("Here at 6.1.1");
+						winner = ImmutableSet.copyOf(Set.of(mrX.piece()));
+						this.moves = ImmutableSet.of();
+					}
+					//some detectives that is not in the remaining can move
+					//game does not stop
+					else{
+						System.out.println("Here at 6.1.2");
+						this.remaining = ImmutableSet.copyOf(Set.of(mrX.piece()));
+						winner = ImmutableSet.of();
+
+					}
 				}
-				else winner = ImmutableSet.of();
+				else {
+					System.out.println("Here at 6.2");
+				}
 				this.moves = ImmutableSet.copyOf(allMoves);
 				System.out.println("remaining: " + remaining);
-				System.out.println("updated remaining: " + updateRemaining);
 				System.out.println("log: " + log);
 				System.out.println("mrX: " + mrX);
 				System.out.println("detectives: " + detectives);
@@ -189,22 +194,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			return winner;
-		}
+			System.out.println("FINAL WINNER: " + winner);
+			return winner;}
 
 		//helper function
 		//returns available moves of certain players
 		private ImmutableSet<Move> getPlayerMove(List<Player> movesWanted){
 			Set<Move> thisMove = new HashSet<>();
 			for(Player player : movesWanted){
+				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
 				if(this.remaining.contains(mrX.piece())){
-					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
 					Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
 					thisMove.addAll(singleMoves);
 					thisMove.addAll(doubleMoves);
 				}
 				else{
-					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
 					thisMove.addAll(singleMoves);
 				}
 			}
