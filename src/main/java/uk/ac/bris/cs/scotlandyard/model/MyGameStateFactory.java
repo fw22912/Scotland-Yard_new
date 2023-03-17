@@ -3,14 +3,8 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
-import javax.crypto.spec.PSource;
-import javax.swing.text.html.Option;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.graph.EndpointPair;
-import com.sun.javafx.geom.Edge;
-import com.sun.media.jfxmedia.events.PlayerStateEvent;
-import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
@@ -417,8 +411,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 	}
-
-
 
 
 	@Nonnull @Override public GameState build(
