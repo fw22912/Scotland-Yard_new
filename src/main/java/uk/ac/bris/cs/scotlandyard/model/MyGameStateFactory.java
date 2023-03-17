@@ -72,11 +72,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				throw new IllegalArgumentException("testEmptyGraphShouldThrow:Empty graph!");
 
 			Set<Piece> detectivePiece = new HashSet<>();
-			Set<Piece> mrXPiece = new HashSet<>();
-			List<Player> onlyMrX = new ArrayList<>();
 			Set<Move> allMoves = new HashSet<>();
-			mrXPiece.add(mrX.piece());
-			onlyMrX.add(mrX);
+			Set<Piece> mrXPiece = Set.of(mrX.piece());
+			List<Player> onlyMrX = List.of(mrX);
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
 
 			//Detectives win
