@@ -72,47 +72,36 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				throw new IllegalArgumentException("testEmptyGraphShouldThrow:Empty graph!");
 
 			Set<Piece> detectivePiece = new HashSet<>();
+			Set<Piece> mrXPiece = new HashSet<>();
 			List<Player> onlyMrX = new ArrayList<>();
-			Set<Piece> finalWinner = new HashSet<>();
 			Set<Move> allMoves = new HashSet<>();
-
+			mrXPiece.add(mrX.piece());
 			onlyMrX.add(mrX);
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
-			System.out.println("====================LOOP STARTS HERE========================");
+
 			//Detectives win
 			//1. detectives catch mrX
 			if(detectives.stream().anyMatch(playerDetective-> playerDetective.location() == mrX.location())){
-				System.out.println("Here at 1");
 				winner = ImmutableSet.copyOf(detectivePiece);
-				System.out.println("move: " + moves);
 			}
 			//2. no unoccupied stations for MrX to travel to
 			if(remaining.contains(mrX.piece()) && getPlayerMove(onlyMrX).isEmpty()){
-				System.out.println("Here at 2");
 				winner = ImmutableSet.copyOf(detectivePiece);
-				System.out.println("move: " + moves);
 			}
 			//MrX wins
 			//1. Detectives cannot move
 			else if(getPlayerMove(detectives).isEmpty()){
-				finalWinner.add(mrX.piece());
-				System.out.println("Here at 3");
-				winner = ImmutableSet.copyOf(finalWinner);
-				System.out.println("move: " + moves);
+				winner = ImmutableSet.copyOf(mrXPiece);
 			}
 			//mrX managed to fill the log and detectives failed to catch mrX
 			else if(remaining.contains(mrX.piece()) && setup.moves.size() == log.size()){
-				finalWinner.add(mrX.piece());
-				System.out.println("Here at 4");
-				winner = ImmutableSet.copyOf(finalWinner);
-				System.out.println("move: " + moves);
+				winner = ImmutableSet.copyOf(mrXPiece);
 			}
 			else {
 				Set<Piece> originalRemaining = new HashSet<>(this.remaining);
 				//iterate through the pieces in the remaining and add their possible moves if not null
 				for(Piece piece : originalRemaining){
 					Player currentPlayer = pieceMatchesPlayer(piece);
-					System.out.println("Player: " + currentPlayer + "  Piece: " + piece );
 					assert currentPlayer != null;
 					if(!getPlayerMove(List.of(currentPlayer)).isEmpty()){
 						allMoves.addAll(getPlayerMove(List.of(currentPlayer)));
@@ -120,37 +109,23 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 				//detectives cannot move(
 				if(allMoves.isEmpty()){
-					System.out.println("Here at 6");
 					//all players cannot move
 					if(getPlayerMove(detectives).isEmpty()){
-						System.out.println("Here at 6.1");
-						winner = ImmutableSet.copyOf(Set.of(mrX.piece()));
-						this.moves = ImmutableSet.of();
+						winner = ImmutableSet.copyOf(mrXPiece);
 					}
 					//some detectives that is not in the remaining can move
 					//game does not stop
 					else{
-						System.out.println("Here at 6.2");
 						for(Player playerDetective : detectives){
 							Set<Move> currentPlayerMove = getPlayerMove(List.of(playerDetective));
 							allMoves.addAll(currentPlayerMove);
 						}
-						if(getPlayerMove(List.of(mrX)).isEmpty()){
-							this.winner = ImmutableSet.copyOf(detectivePiece);
-							this.moves = ImmutableSet.of();
+						if(getPlayerMove(onlyMrX).isEmpty()){
+							winner = ImmutableSet.copyOf(detectivePiece);
 						}
 						else{
-							this.moves = ImmutableSet.copyOf(allMoves);
-							this.remaining = ImmutableSet.copyOf(Set.of(mrX.piece()));
-							winner = ImmutableSet.of();
+							this.remaining = ImmutableSet.copyOf(mrXPiece);
 						}
-						System.out.println("remaining: " + remaining);
-						System.out.println("log: " + log);
-						System.out.println("mrX: " + mrX);
-						System.out.println("detectives: " + detectives);
-						System.out.println("moves: " + moves);
-						System.out.println("winner: " + winner);
-
 					}
 				}
 			}
@@ -197,12 +172,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		@Nonnull
-		public ImmutableList<LogEntry> getMrXTravelLog(){return log;}
+		public ImmutableList<LogEntry> getMrXTravelLog() {return log;}
 
 		@Nonnull
-		public ImmutableSet<Piece> getWinner() {
-			System.out.println("FINAL WINNER: " + winner);
-			return winner;}
+		public ImmutableSet<Piece> getWinner() {return winner;}
 
 		//helper function
 		//returns available moves of certain players
