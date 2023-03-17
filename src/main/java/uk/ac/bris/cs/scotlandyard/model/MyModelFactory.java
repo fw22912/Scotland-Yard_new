@@ -7,7 +7,9 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * cw-model
@@ -15,18 +17,21 @@ import java.util.List;
  */
 public final class MyModelFactory implements Factory<Model> {
 	private final class MyModel implements Model{
+		private Observer.Event event;
 		private ImmutableSet<Observer> observers;
 		private GameSetup setup;
 		private Player mrX;
 		private ImmutableList<Player> detectives;
 		private Board.GameState gameState;
 
+		//constructor that builds MyModel
 		private MyModel(
 				final GameSetup setup,
 				final Player mrX,
 				final ImmutableList<Player> detectives){
 			this.gameState =  new MyGameStateFactory().build(setup, mrX, detectives);
 			this.observers = ImmutableSet.of();
+
 		}
 
 		@Nonnull
@@ -37,16 +42,27 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void registerObserver(@Nonnull Observer observer) {
+			Set<Observer> updatedObservers = new HashSet<>(observers);
+			//throwing an exception
+			if(observers.contains(observer)) throw new IllegalArgumentException("This observer is already registered!");
+			updatedObservers.add(observer);
+			this.observers = ImmutableSet.copyOf(updatedObservers);
 		}
 
 		@Override
 		public void unregisterObserver(@Nonnull Observer observer) {
+			Set<Observer> updatedObservers = new HashSet<>(observers);
+			//throwing exceptions
+			if(observers.isEmpty()) throw new NullPointerException("Empty observers!");
+			if(!observers.contains(observer)) throw new IllegalArgumentException("This observer was never registered!");
+			updatedObservers.remove(observer);
+			this.observers = ImmutableSet.copyOf(updatedObservers);
 		}
 
 		@Nonnull
 		@Override
 		public ImmutableSet<Observer> getObservers() {
-			return observers;
+			return this.observers;
 		}
 
 
@@ -56,9 +72,14 @@ public final class MyModelFactory implements Factory<Model> {
 			//  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 			this.gameState = gameState.advance(move);
 			if(gameState.getWinner().isEmpty()){
-
+				event = Observer.Event.MOVE_MADE;
 			}
-
+			else {
+				event = Observer.Event.GAME_OVER;
+			}
+			for(Observer observer : observers){
+				observer.onModelChanged(gameState, event);
+			}
 		}
 	}
 	@Nonnull @Override public Model build(GameSetup setup,
