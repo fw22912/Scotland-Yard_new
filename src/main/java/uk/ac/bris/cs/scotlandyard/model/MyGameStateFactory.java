@@ -109,6 +109,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("move: " + moves);
 			}
+			else if (getAvailableMoves().isEmpty() && !remaining.isEmpty()) {
+				finalWinner.add(mrX.piece());
+				System.out.println("Here at 5");
+				winner = ImmutableSet.copyOf(finalWinner);
+				System.out.println("move: " + moves);
+			}
 			else {
 				System.out.println("Here at 6");
 				System.out.println("players: " + getPlayers());
@@ -180,8 +186,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
 			///Determining winner
-
-
 			return winner;
 		}
 
