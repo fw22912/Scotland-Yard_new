@@ -75,12 +75,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<Player> onlyMrX = new ArrayList<>();
 			Set<Piece> finalWinner = new HashSet<>();
 			Set<Move> allMoves = new HashSet<>();
+			Set<Piece> updateRemaining = new HashSet<>();
 
 			onlyMrX.add(mrX);
 			detectives.forEach(playerDetective -> detectivePiece.add(playerDetective.piece()));
-			for(Player playerDetective : detectives) {
-			System.out.println("detectives' tickets: " + playerDetective.tickets());}
-
 			System.out.println("====================LOOP STARTS HERE========================");
 			//Detectives win
 			//1. detectives catch mrX
@@ -99,45 +97,44 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//2.detectives cannot move
 			else if(getPlayerMove(detectives).isEmpty()){
 				finalWinner.add(mrX.piece());
-				System.out.println("Here at 4.2");
+				System.out.println("Here at 3");
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("move: " + moves);
 			}
 			else if(remaining.contains(mrX.piece()) && setup.moves.size() == log.size()){
 				finalWinner.add(mrX.piece());
-				System.out.println("Here at 5");
-				winner = ImmutableSet.copyOf(finalWinner);
-				System.out.println("move: " + moves);
-			}
-			else if (getAvailableMoves().isEmpty() && !remaining.isEmpty()) {
-				finalWinner.add(mrX.piece());
-				System.out.println("Here at 5");
+				System.out.println("Here at 4");
 				winner = ImmutableSet.copyOf(finalWinner);
 				System.out.println("move: " + moves);
 			}
 			else {
-				System.out.println("Here at 6");
-				System.out.println("players: " + getPlayers());
-				Set<Piece> originalRemaining = this.remaining;
+				//Iterate through the remaining and find which players can move
 				for(Piece piece : remaining){
-					System.out.println("remaining: " + remaining);
 					Player player = pieceMatchesPlayer(piece);
-					System.out.println("player: " + player);
-					assert player != null;
-					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
-					Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
-					allMoves.addAll(singleMoves);
-					allMoves.addAll(doubleMoves);
-					System.out.println("all Moves: " + allMoves);
+					if(!getPlayerMove(List.of(player)).isEmpty()){
+						System.out.println("Dropped by...");
+						updateRemaining.add(player.piece());
+
 				}
-				this.remaining = ImmutableSet.copyOf(originalRemaining);
-				moves = ImmutableSet.copyOf(allMoves);
-				if(moves.isEmpty()){
-					winner = ImmutableSet.of();
+					updateRemaining.add(mrX.piece());
+
 				}
-				System.out.println("move: " + moves);
+				//Iterate through updated remaining and look through all possible moves
+				for(Piece piece : updateRemaining){
+					Player player = pieceMatchesPlayer(piece);
+					System.out.println(player.piece() + " dropped by");
+					System.out.println("Here at 6");
+					allMoves.addAll(getPlayerMove(List.of(player)));
+				}
+				winner = ImmutableSet.of();
+				this.moves = ImmutableSet.copyOf(allMoves);
+				System.out.println("remaining: " + remaining);
+				System.out.println("log: " + log);
+				System.out.println("mrX: " + mrX);
+				System.out.println("detectives: " + detectives);
+				System.out.println("moves: " + moves);
+				System.out.println("winner: " + winner);
 			}
-			System.out.println("winner: " + winner);
 		}
 
 		//implementing methods
@@ -185,7 +182,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {
-			///Determining winner
 			return winner;
 		}
 
@@ -194,10 +190,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Move> getPlayerMove(List<Player> movesWanted){
 			Set<Move> thisMove = new HashSet<>();
 			for(Player player : movesWanted){
-				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
-				Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
-				thisMove.addAll(singleMoves);
-				thisMove.addAll(doubleMoves);
+				if(this.remaining.contains(mrX.piece())){
+					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
+					Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
+					thisMove.addAll(singleMoves);
+					thisMove.addAll(doubleMoves);
+				}
+				else{
+					Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
+					thisMove.addAll(singleMoves);
+				}
 			}
 			return ImmutableSet.copyOf(thisMove);
 		}
