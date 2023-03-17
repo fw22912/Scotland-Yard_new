@@ -120,32 +120,39 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 				//detectives cannot move(
 				if(allMoves.isEmpty()){
-					System.out.println("Here at 6.1");
+					System.out.println("Here at 6");
 					//all players cannot move
 					if(getPlayerMove(detectives).isEmpty()){
-						System.out.println("Here at 6.1.1");
+						System.out.println("Here at 6.1");
 						winner = ImmutableSet.copyOf(Set.of(mrX.piece()));
 						this.moves = ImmutableSet.of();
 					}
 					//some detectives that is not in the remaining can move
 					//game does not stop
 					else{
-						System.out.println("Here at 6.1.2");
-						this.remaining = ImmutableSet.copyOf(Set.of(mrX.piece()));
-						winner = ImmutableSet.of();
+						System.out.println("Here at 6.2");
+						for(Player playerDetective : detectives){
+							Set<Move> currentPlayerMove = getPlayerMove(List.of(playerDetective));
+							allMoves.addAll(currentPlayerMove);
+						}
+						if(getPlayerMove(List.of(mrX)).isEmpty()){
+							this.winner = ImmutableSet.copyOf(detectivePiece);
+							this.moves = ImmutableSet.of();
+						}
+						else{
+							this.moves = ImmutableSet.copyOf(allMoves);
+							this.remaining = ImmutableSet.copyOf(Set.of(mrX.piece()));
+							winner = ImmutableSet.of();
+						}
+						System.out.println("remaining: " + remaining);
+						System.out.println("log: " + log);
+						System.out.println("mrX: " + mrX);
+						System.out.println("detectives: " + detectives);
+						System.out.println("moves: " + moves);
+						System.out.println("winner: " + winner);
 
 					}
 				}
-				else {
-					System.out.println("Here at 6.2");
-				}
-				this.moves = ImmutableSet.copyOf(allMoves);
-				System.out.println("remaining: " + remaining);
-				System.out.println("log: " + log);
-				System.out.println("mrX: " + mrX);
-				System.out.println("detectives: " + detectives);
-				System.out.println("moves: " + moves);
-				System.out.println("winner: " + winner);
 			}
 		}
 
