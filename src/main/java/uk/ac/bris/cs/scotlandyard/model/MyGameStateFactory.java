@@ -274,8 +274,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		//helper method for updating the location
 		public static List<Integer> updateLocation(Move move){
-			return move.accept(new Move.Visitor<List<Integer>>() {
-				List<Integer> newDestination = new ArrayList<>();
+			return move.accept(new Move.Visitor<>() {
+				final List<Integer> newDestination = new ArrayList<>();
 				@Override
 				public List<Integer> visit(Move.SingleMove move) {
 					newDestination.add(move.destination);
@@ -293,8 +293,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		//helper method for updating ticket
 		public static List<ScotlandYard.Ticket> updateTicket(Move move){
-			return move.accept(new Move.Visitor<List<ScotlandYard.Ticket>>() {
-				List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
+			return move.accept(new Move.Visitor<>() {
+				final List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
 
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.SingleMove move) {
