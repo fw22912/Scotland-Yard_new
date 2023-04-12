@@ -251,9 +251,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 				}
 			}
-			if(firstMoves.isEmpty()){
-				return ImmutableSet.of();
-			}
+			if(firstMoves.isEmpty()) {return ImmutableSet.of();}
 			return ImmutableSet.copyOf(doubleMoves);
 		}
 
@@ -267,7 +265,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					newDestination.add(move.destination);
 					return newDestination;
 				}
-
 				@Override
 				public List<Integer> visit(Move.DoubleMove move) {
 					newDestination.add(move.destination1);
@@ -281,7 +278,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private static List<ScotlandYard.Ticket> updateTicket(Move move){
 			return move.accept(new Move.Visitor<>() {
 				final List< ScotlandYard.Ticket> newTicket = new ArrayList<>();
-
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.SingleMove move) {
 					newTicket.add(move.ticket);
@@ -297,7 +293,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		//updates gamestate after mrX's move
-		private GameState mrXMove(Move move) {
+		private GameState updateMrX(Move move) {
 			//for updating log, ticket, location, remaining, location, new detectives after move
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
@@ -316,7 +312,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//DoubleMove
 			else{
 				//check if mrX is using double ticket - reveal: True hidden: False
-				//1. reveal + reveal << Why do we need this
+				//1. reveal + reveal
 				if(setup.moves.get(log.size()) && setup.moves.get(log.size()+1)){
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 					listLogEntry.add(LogEntry.reveal(addTicket.get(1), addLocation.get(1)));
@@ -349,8 +345,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 
+
 		//updates gamestate after detective's move
-		private GameState detectivesMove(Move move) {
+		private GameState updateDetective(Move move) {
 			//for updating log, ticket, location, remaining, location, new detectives after move
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
@@ -386,9 +383,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.moves = this.getAvailableMoves();
 			if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 			if (move.commencedBy() == mrX.piece() && remaining.contains(mrX.piece())) {
-				return mrXMove(move);
+				return updateMrX(move);
 			}
-			else return detectivesMove(move);
+			else return updateDetective(move);
 		}
 	}
 
