@@ -9,7 +9,6 @@ import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -111,11 +110,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 		}
 
-		//implementing methods
+
+		//IMPLEMENTING METHODS
 		@Nonnull
 		public GameSetup getSetup() {return setup;}
 
-		//return all players
 		@Nonnull
 		public ImmutableSet<Piece> getPlayers() {
 			return Stream.concat(Stream.of(mrX.piece()), detectives.stream().map(Player :: piece))
@@ -174,7 +173,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 
 		//HELPER FUNCTION//
-		//returns available moves of certain players
+		//returns available moves of certain players: used generics and polymorphism
 		private <T extends Player> ImmutableSet<Move> getAvailableMoves(List<T> playerMove){
 			Set<Move> thisMove = new HashSet<>();
 			for(T player : playerMove){
@@ -189,8 +188,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(thisMove);
 		}
 
+
 		//returns a player that matches a piece
-		private Player pieceMatchesPlayer(Piece piece) {
+		private <T> Player pieceMatchesPlayer(T piece) {
 			Set<Player> allPlayers = new HashSet<>(detectives);
 			allPlayers.add(mrX);
 			return allPlayers.stream()
@@ -202,7 +202,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		//SingleMove
 		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
-			Set<Move.SingleMove> availableMoves = new HashSet<>();
+			Set<Move.SingleMove> singleMoves = new HashSet<>();
 			Set<Integer> detectiveOccupied = new HashSet<>();
 
 			detectives.forEach(detective -> detectiveOccupied.add(detective.location()));
@@ -212,39 +212,39 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				if (!detectiveOccupied.contains(destination)) {
 					for (ScotlandYard.Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
 						if (player.has(t.requiredTicket())) {
-							Move.SingleMove newMoves = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
-							availableMoves.add(newMoves);
+							Move.SingleMove singleMove = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+							singleMoves.add(singleMove);
 						}
 					}
 					//check if the player has secret ticket, and if yes use it
 					if (player.has(ScotlandYard.Ticket.SECRET) && player.isMrX()) {
-						Move.SingleMove newMoves = new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination);
-						availableMoves.add(newMoves);
+						Move.SingleMove singleMove = new Move.SingleMove(player.piece(), source, ScotlandYard.Ticket.SECRET, destination);
+						singleMoves.add(singleMove);
 					}
 				}
 			}
-			return ImmutableSet.copyOf(availableMoves);
+			return ImmutableSet.copyOf(singleMoves);
 		}
+
 
 		//DoubleMove
 		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source, ImmutableList<LogEntry> log) {
 			Set<Move.DoubleMove> doubleMoves = new HashSet<>();
 			//storing firstMoves
 			Set<Move.SingleMove> firstMoves = makeSingleMoves(setup, detectives, player, source);
-			Set<Move.SingleMove> secondMoves;
 			//availableMoves for checking the number of left available moves
 			int availableMoves = setup.moves.size() - log.size();
+
 
 			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
 				for (Move.SingleMove firstMove : firstMoves) {
 					//create second moves based on first move's destination
-					secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
+					Set<Move.SingleMove> secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
 					for (Move.SingleMove secondMove : secondMoves) {
 						//if it uses same transportation check at least two tickets, otherwise check one
-						if ((player.hasAtLeast(firstMove.ticket, 2) && firstMove.ticket == secondMove.ticket)
-								|| (firstMove.ticket != secondMove.ticket
-								&& player.hasAtLeast(firstMove.ticket, 1)
-								&& player.hasAtLeast(secondMove.ticket, 1))) {
+						boolean sameTransport = player.hasAtLeast(firstMove.ticket, 2) && firstMove.ticket == secondMove.ticket;
+						boolean diffTransport = firstMove.ticket != secondMove.ticket && player.hasAtLeast(firstMove.ticket, 1) && player.hasAtLeast(secondMove.ticket, 1);
+						if (sameTransport || diffTransport) {
 							Move.DoubleMove doubleMove = new Move.DoubleMove(player.piece(), source, firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination);
 							doubleMoves.add(doubleMove);
 						}
@@ -380,7 +380,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 		//HELPER METHODS ENDS HERE//
-
 
 		@Nonnull
 		public GameState advance(Move move) {
