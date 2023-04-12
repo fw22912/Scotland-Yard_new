@@ -60,6 +60,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					throw new IllegalArgumentException();
 				if (detective.has(ScotlandYard.Ticket.DOUBLE) || detective.has(ScotlandYard.Ticket.SECRET))
 					throw new IllegalArgumentException();
+				//checking for duplicate detectives or location
 				if (!players.add(detective) || !detectiveLocation.add(detective.location()))
 					throw new IllegalArgumentException();
 			});
@@ -146,7 +147,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		public ImmutableSet<Piece> getWinner() {return winner;}
 
-
 		@Nonnull
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> availableMoves = new HashSet<>();
@@ -173,7 +173,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 
 		//HELPER FUNCTION//
-		//returns available moves of certain players: used generics and polymorphism
+		//returns available moves of certain players
 		private <T extends Player> ImmutableSet<Move> getAvailableMoves(List<T> playerMove){
 			Set<Move> thisMove = new HashSet<>();
 			for(T player : playerMove){
@@ -235,15 +235,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//availableMoves for checking the number of left available moves
 			int availableMoves = setup.moves.size() - log.size();
 
-
 			if(player.has(ScotlandYard.Ticket.DOUBLE) && availableMoves >= 2) {
 				for (Move.SingleMove firstMove : firstMoves) {
 					//create second moves based on first move's destination
 					Set<Move.SingleMove> secondMoves = makeSingleMoves(setup, detectives, player, firstMove.destination);
 					for (Move.SingleMove secondMove : secondMoves) {
-						//if it uses same transportation check at least two tickets, otherwise check one
 						boolean sameTransport = player.hasAtLeast(firstMove.ticket, 2) && firstMove.ticket == secondMove.ticket;
 						boolean diffTransport = firstMove.ticket != secondMove.ticket && player.hasAtLeast(firstMove.ticket, 1) && player.hasAtLeast(secondMove.ticket, 1);
+
+						//if it uses same transportation check at least two tickets, otherwise check one
 						if (sameTransport || diffTransport) {
 							Move.DoubleMove doubleMove = new Move.DoubleMove(player.piece(), source, firstMove.ticket, firstMove.destination, secondMove.ticket, secondMove.destination);
 							doubleMoves.add(doubleMove);
@@ -274,6 +274,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
+
 		//updating ticket
 		private static List<ScotlandYard.Ticket> updateTicket(Move move){
 			return move.accept(new Move.Visitor<>() {
@@ -292,6 +293,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 		}
 
+
 		//updates gamestate after mrX's move
 		private GameState updateMrX(Move move) {
 			//for updating log, ticket, location, remaining, location, new detectives after move
@@ -304,7 +306,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					listLogEntry.add(LogEntry.reveal(addTicket.get(0), addLocation.get(0)));
 				}
 				else listLogEntry.add(LogEntry.hidden(addTicket.get(0)));
-				//updating mrX location
 				//move Mr X's position to their new destination
 				mrX = mrX.at(addLocation.get(0));
 			}
@@ -377,6 +378,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 		//HELPER METHODS ENDS HERE//
+
 
 		@Nonnull
 		public GameState advance(Move move) {
