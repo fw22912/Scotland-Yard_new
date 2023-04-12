@@ -51,22 +51,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 
 			// THROWING EXCEPTIONS//
-			Set<Player> set = new HashSet<>();
-			Set<Integer> setLocation = new HashSet<>();
+			Set<Player> players = new HashSet<>();
+			Set<Integer> detectiveLocation = new HashSet<>();
 			if (mrX == null || detectives == null) throw new NullPointerException();
 			if (mrX.isDetective()) throw new IllegalArgumentException();
-			detectives.forEach(playerDetective -> {
-				if(playerDetective == null) throw new NullPointerException();
-				if (playerDetective.isMrX())
+			detectives.forEach(detective -> {
+				if (detective == null) throw new NullPointerException();
+				if (detective.isMrX())
 					throw new IllegalArgumentException();
-				if (playerDetective.has(ScotlandYard.Ticket.DOUBLE) || playerDetective.has(ScotlandYard.Ticket.SECRET))
+				if (detective.has(ScotlandYard.Ticket.DOUBLE) || detective.has(ScotlandYard.Ticket.SECRET))
 					throw new IllegalArgumentException();
-				if (!set.add(playerDetective) || !setLocation.add(playerDetective.location()))
+				if (!players.add(detective) || !detectiveLocation.add(detective.location()))
 					throw new IllegalArgumentException();
 			});
 			if (setup.moves.isEmpty() || setup.graph.nodes().isEmpty()) throw new IllegalArgumentException();
 
-			// GET WINNER//
+			//GET WINNER//
 			Set<Piece> detectivePiece = new HashSet<>();
 			Set<Move> allMoves = new HashSet<>();
 			Set<Piece> mrXPiece = Set.of(mrX.piece());
@@ -104,9 +104,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				//detectives cannot move(
 				if(allMoves.isEmpty()){
 					//if mrX is cornered
-					if(getAvailableMoves(onlyMrX).isEmpty()){
-						winner = ImmutableSet.copyOf(detectivePiece);
-					}
+					if(getAvailableMoves(onlyMrX).isEmpty()) {winner = ImmutableSet.copyOf(detectivePiece);}
 					// detectives cannot move
 					else {this.remaining = ImmutableSet.copyOf(mrXPiece);}
 				}
@@ -136,12 +134,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
 			if (piece.isMrX()) {
 				return Optional.of(ticket -> mrX.tickets().get(ticket));
-			} else {
-				return detectives.stream()
+			}
+			else return detectives.stream()
 						.filter(player -> player.piece().equals(piece))
 						.findFirst()
 						.map(player -> ticket -> player.tickets().get(ticket));
-			}
 		}
 
 		@Nonnull
@@ -153,51 +150,49 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Nonnull
 		public ImmutableSet<Move> getAvailableMoves() {
-			Set<Move> newMoves = new HashSet<>();
-
+			Set<Move> availableMoves = new HashSet<>();
 			if(!winner.isEmpty()) return ImmutableSet.of();
-
-			if (this.remaining.contains(mrX.piece())) {
-				//How to make single moves
+			//MrX
+			else if (this.remaining.contains(mrX.piece())) {
 				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, mrX, mrX.location());
 				Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, mrX, mrX.location(), log);
-				newMoves.addAll(singleMoves);
-				newMoves.addAll(doubleMoves);
+				availableMoves.addAll(singleMoves);
+				availableMoves.addAll(doubleMoves);
 			}
+			//Detectives
 			else {
 				for (Player playerDetective : detectives) {
 					if (this.remaining.contains(playerDetective.piece())) {
 						Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, playerDetective, playerDetective.location());
-						newMoves.addAll(singleMoves);
+						availableMoves.addAll(singleMoves);
 					}
 				}
 			}
-			moves = ImmutableSet.copyOf(newMoves);
+			moves = ImmutableSet.copyOf(availableMoves);
 			return moves;
 		}
 
+
 		//HELPER FUNCTION//
 		//returns available moves of certain players
-		private <T extends Player> ImmutableSet<Move> getAvailableMoves(List<T> movesWanted){
+		private <T extends Player> ImmutableSet<Move> getAvailableMoves(List<T> playerMove){
 			Set<Move> thisMove = new HashSet<>();
-			for(T player : movesWanted){
+			for(T player : playerMove){
 				Set<Move.SingleMove> singleMoves = makeSingleMoves(setup, detectives, player, player.location());
 				if(this.remaining.contains(mrX.piece())){
 					Set<Move.DoubleMove> doubleMoves = makeDoubleMoves(setup, detectives, player, player.location(), log);
 					thisMove.addAll(singleMoves);
 					thisMove.addAll(doubleMoves);
 				}
-				else{
-					thisMove.addAll(singleMoves);
-				}
+				else {thisMove.addAll(singleMoves);}
 			}
 			return ImmutableSet.copyOf(thisMove);
 		}
 
 		//returns a player that matches a piece
 		private Player pieceMatchesPlayer(Piece piece) {
-			Set<Player> allPlayers = Stream.concat(detectives.stream(), Stream.of(mrX))
-					.collect(Collectors.toSet());
+			Set<Player> allPlayers = new HashSet<>(detectives);
+			allPlayers.add(mrX);
 			return allPlayers.stream()
 					.filter(player -> player.piece().equals(piece))
 					.findFirst()
