@@ -36,7 +36,7 @@ public final class MyModelFactory implements Factory<Model> {
 		@Override
 		public void registerObserver(@Nonnull Observer observer) {
 			Set<Observer> updatedObservers = new HashSet<>(observers);
-			if (observer == null) throw new NullPointerException("testUnregisterNullObserverShouldThrow: Observer is empty!");
+//			if (observer == null) throw new NullPointerException("testUnregisterNullObserverShouldThrow: Observer is empty!");
 			if (observers.contains(observer)) throw new IllegalArgumentException("testRegisterSameObserverTwiceShouldThrow: This observer is already registered!");
 			updatedObservers.add(observer);
 			observers = ImmutableSet.copyOf(updatedObservers);
