@@ -26,9 +26,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private List<Player> detectives;
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
-		private List<LogEntry> listLogEntry;
-		private Set<Piece> updatedRemaining;
-		private List<Player> updateDetectives;
+		private final List<LogEntry> listLogEntry;
+		private final Set<Piece> updatedRemaining;
+		private final List<Player> updateDetectives;
 
 
 		//constructor
@@ -50,7 +50,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.updateDetectives = new ArrayList<>();
 
 
-			// Throwing exceptions
+			// THROWING EXCEPTIONS//
 			Set<Player> set = new HashSet<>();
 			Set<Integer> setLocation = new HashSet<>();
 			if (mrX == null || detectives == null) throw new NullPointerException();
@@ -66,7 +66,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			});
 			if (setup.moves.isEmpty() || setup.graph.nodes().isEmpty()) throw new IllegalArgumentException();
 
-			// Determine winner
+			// GET WINNER//
 			Set<Piece> detectivePiece = new HashSet<>();
 			Set<Move> allMoves = new HashSet<>();
 			Set<Piece> mrXPiece = Set.of(mrX.piece());
@@ -103,27 +103,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 				//detectives cannot move(
 				if(allMoves.isEmpty()){
-					//all players cannot move
-					if(getAvailableMoves(detectives).isEmpty()){
-						winner = ImmutableSet.copyOf(mrXPiece);
+					//if mrX is cornered
+					if(getAvailableMoves(onlyMrX).isEmpty()){
+						winner = ImmutableSet.copyOf(detectivePiece);
 					}
-					//some detectives that is not in the remaining can move
-					//game does not stop
-					else{
-						//adding moves of every detective
-						allMoves.addAll(detectives.stream()
-								.map(playerDetective -> getAvailableMoves(List.of(playerDetective)))
-								.flatMap(Collection :: stream)
-								.collect(Collectors.toSet()));
-						//if mrX is cornered
-						if(getAvailableMoves(onlyMrX).isEmpty()){
-							winner = ImmutableSet.copyOf(detectivePiece);
-						}
-						// detectives cannot move
-						else{
-							this.remaining = ImmutableSet.copyOf(mrXPiece);
-						}
-					}
+					// detectives cannot move
+					else {this.remaining = ImmutableSet.copyOf(mrXPiece);}
 				}
 			}
 		}
@@ -209,6 +194,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(thisMove);
 		}
 
+		//returns a player that matches a piece
 		private Player pieceMatchesPlayer(Piece piece) {
 			Set<Player> allPlayers = Stream.concat(detectives.stream(), Stream.of(mrX))
 					.collect(Collectors.toSet());
@@ -276,6 +262,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.copyOf(doubleMoves);
 		}
 
+
 		//updating the location
 		private static List<Integer> updateLocation(Move move){
 			return move.accept(new Move.Visitor<>() {
@@ -305,7 +292,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					newTicket.add(move.ticket);
 					return newTicket;
 				}
-
 				@Override
 				public List<ScotlandYard.Ticket> visit(Move.DoubleMove move) {
 					newTicket.add(move.ticket1);
@@ -321,7 +307,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			List<ScotlandYard.Ticket> addTicket = updateTicket(move);
 			List<Integer> addLocation = updateLocation(move);
 
-			//1. move should be added to the log
 			//SingleMove
 			if(addLocation.size() == 1){
 				if(setup.moves.get(log.size())){
@@ -399,8 +384,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
+		//HELPER METHODS ENDS HERE//
 
-		//HELPER METHOD END//
+
 		@Nonnull
 		public GameState advance(Move move) {
 			this.moves = this.getAvailableMoves();
